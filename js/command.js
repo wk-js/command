@@ -57,6 +57,7 @@ class Command {
             const task = p.atIndex(0);
             if (!task || task.match(/^-+/)) {
                 console.log(`No command given`);
+                return;
             }
             name = task;
         }
