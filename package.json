@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Command",
   "bin": {
-    "command": "./js/cli.js"
+    "command": "./bin/command.js"
   },
   "types": "js",
   "scripts": {
