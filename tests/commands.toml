@@ -1,0 +1,6 @@
+[commands]
+pwd = "pwd"
+
+[commands.list]
+command = "ls -la"
+cwd = "./tests"
