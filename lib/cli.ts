@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import TOML from "toml";
 import { isFile } from "lol/js/node/fs"
 import Fs from "fs";
