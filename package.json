@@ -2,7 +2,9 @@
   "name": "command",
   "version": "0.0.1",
   "description": "Command",
-  "bin": "js/cli.js",
+  "bin": {
+    "command": "./js/cli.js"
+  },
   "types": "js",
   "scripts": {
     "tsc": "tsc",
