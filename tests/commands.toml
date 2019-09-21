@@ -4,3 +4,4 @@ pwd = "pwd"
 [commands.list]
 command = "ls -la"
 cwd = "./tests"
+description = "List file structure"

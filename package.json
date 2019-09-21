@@ -2,12 +2,10 @@
   "name": "command",
   "version": "0.0.1",
   "description": "Command",
-  "bin": {
-    "command": "./bin/command.js"
-  },
+  "bin": "./bin/command.js",
   "types": "js",
   "scripts": {
-    "tsc": "tsc",
+    "tsc": "./node_modules/.bin/tsc",
     "test": "mocha -r ts-node/register ./test/**/*.spec.ts"
   },
   "author": "",

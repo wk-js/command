@@ -1,5 +1,6 @@
-const { Command, Parameters } = require('../js/Command')
+const { TaskList } = require('../js/task-list')
 
-Command.init()
-Command.create('list', 'ls')
-Command.execute()
+const Runner = TaskList.create()
+Runner.register('list', 'ls')
+Runner.register('list-test', 'ls').cwd('./tests').dependsOn('list')
+Runner.run('list-test')
