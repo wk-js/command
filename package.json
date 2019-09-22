@@ -1,8 +1,8 @@
 {
-  "name": "command",
+  "name": "wk",
   "version": "0.0.1",
-  "description": "Command",
-  "bin": "./bin/command.js",
+  "description": "wk",
+  "bin": "./bin/wk.js",
   "types": "js",
   "scripts": {
     "tsc": "tsc",
