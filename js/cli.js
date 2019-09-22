@@ -79,10 +79,9 @@ function main() {
     if (typeof argv['0'] == 'string') {
         list.run(argv['0'], (task) => {
             Object.keys(argv).forEach((key) => {
-                const literal = task.toLiteral();
                 if (!key.match(/wk\./)) {
                     if (!isNaN(parseFloat(key))) {
-                        if (argv[key] != literal.cmd)
+                        if (argv[key] != argv['0'])
                             task.arg(argv[key]);
                     }
                     else if (key.length == 1 && typeof argv[key] == 'boolean') {
