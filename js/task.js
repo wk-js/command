@@ -5,8 +5,9 @@ class Task {
         this._cwd = process.cwd();
         this._args = [];
         this._depends = [];
-        this._description = "";
+        this._binPath = "";
         this._visible = true;
+        this._description = "";
         const args = _cmd.split(/\s/);
         this._cmd = args.shift();
         this._args.push(...args);
@@ -23,10 +24,17 @@ class Task {
         this._cwd = command._cwd;
         this._args = command._args.slice(0);
         this._depends = command._depends.slice(0);
+        this._binPath = command._binPath;
+        this._visible = command._visible;
+        this._description = command._description;
         return this;
     }
     cwd(_cwd) {
         this._cwd = _cwd;
+        return this;
+    }
+    binPath(_binPath) {
+        this._binPath = _binPath;
         return this;
     }
     description(_description) {
@@ -38,21 +46,26 @@ class Task {
         return this;
     }
     arg(arg) {
-        this._args.push(arg);
+        const args = arg.split(/\s/);
+        this._args.push(...args);
         return this;
     }
     args(...args) {
-        this._args.push(...args);
+        for (let i = 0; i < args.length; i++) {
+            const _args = args[i].split(/\s/);
+            this._args.push(..._args);
+        }
         return this;
     }
     dependsOn(...tasks) {
         this._depends.push(...tasks);
         return this;
     }
-    to_literal() {
+    toLiteral() {
         return {
             cwd: this._cwd,
             cmd: this._cmd,
+            binPath: this._binPath,
             description: this._description,
             visible: this._visible,
             args: this._args.slice(0),

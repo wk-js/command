@@ -4,8 +4,9 @@ export class Task {
   private _cwd: string = process.cwd()
   private _args: string[] = []
   private _depends: string[] = []
-  private _description: string = ""
+  private _binPath: string = ""
   private _visible: boolean = true
+  private _description: string = ""
 
   constructor(_cmd: string) {
     const args = _cmd.split(/\s/)
@@ -27,11 +28,19 @@ export class Task {
     this._cwd = command._cwd
     this._args = command._args.slice(0)
     this._depends = command._depends.slice(0)
+    this._binPath = command._binPath
+    this._visible = command._visible
+    this._description = command._description
     return this
   }
 
   cwd(_cwd: string) {
     this._cwd = _cwd
+    return this
+  }
+
+  binPath(_binPath: string) {
+    this._binPath = _binPath
     return this
   }
 
@@ -46,12 +55,16 @@ export class Task {
   }
 
   arg(arg: string) {
-    this._args.push(arg)
+    const args = arg.split(/\s/)
+    this._args.push(...args)
     return this
   }
 
   args(...args: string[]) {
-    this._args.push(...args)
+    for (let i = 0; i < args.length; i++) {
+      const _args = args[i].split(/\s/)
+      this._args.push(..._args)
+    }
     return this
   }
 
@@ -60,10 +73,11 @@ export class Task {
     return this
   }
 
-  to_literal() {
+  toLiteral() {
     return {
       cwd: this._cwd,
       cmd: this._cmd,
+      binPath: this._binPath,
       description: this._description,
       visible: this._visible,
       args: this._args.slice(0),

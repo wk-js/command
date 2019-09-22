@@ -5,3 +5,7 @@ pwd = "pwd"
 command = "ls -la"
 cwd = "./tests"
 description = "List file structure"
+
+[commands.tsc]
+command = "tsc"
+binPath = "./node_modules/.bin"

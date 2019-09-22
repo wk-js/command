@@ -1,0 +1,8 @@
+[commands.tsc]
+command = "tsc"
+binPath = "./node_modules/.bin"
+
+[commands.mocha]
+command = "mocha"
+binPath = "./node_modules/.bin"
+args = [ "-r ts-node/register ./test/**/*.spec.ts" ]

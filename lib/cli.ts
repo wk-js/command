@@ -1,5 +1,4 @@
 import TOML from "toml";
-import { isFile } from "lol/js/node/fs";
 import * as Path from "path";
 import * as Fs from "fs";
 import { parse } from "./utils";
@@ -8,6 +7,7 @@ import { TaskList } from "./task-list";
 interface ICommand {
   command: string
   cwd?: string
+  binPath?: string
   description?: string
   visible?: boolean
   args?: string[]
@@ -16,6 +16,18 @@ interface ICommand {
 
 interface ICommands {
   commands: Record<string, ICommand|string>
+}
+
+function isFile(path: string) {
+  try {
+      var stat = Fs.statSync(path);
+      if (!stat.isFile())
+          throw 'Not a file';
+  }
+  catch (e) {
+      return false;
+  }
+  return true;
 }
 
 function fetch_commands(argv: Record<string, string | boolean>) {
@@ -62,14 +74,32 @@ function main() {
       const c = list.register(name, command.command)
       if (command.cwd) c.cwd(command.cwd)
       if (command.args) c.args(...command.args)
+      if (command.binPath) c.binPath(command.binPath)
+      if (command.visible) c.visible(command.visible)
       if (command.dependsOn) c.dependsOn(...command.dependsOn)
       if (command.description) c.description(command.description)
-      if (command.visible) c.visible(command.visible)
     }
   })
 
   if (typeof argv['0'] == 'string') {
-    list.run(argv['0'] as string).catch((e) => {
+    list.run(argv['0'] as string, (task) => {
+      Object.keys(argv).forEach((key) => {
+        const literal = task.toLiteral()
+
+        if (!key.match(/wk\./)) {
+          if (!isNaN(parseFloat(key))) {
+            if (argv[key] != literal.cmd) task.arg(argv[key] as string)
+          } else if (key.length == 1 && typeof argv[key] == 'boolean') {
+            task.arg(`-${key}`)
+          } else if (typeof argv[key] == 'boolean') {
+            task.arg(`--${key}`)
+          } else {
+            task.arg(`--${key} ${argv[key]}`)
+          }
+        }
+      })
+    })
+    .catch((e) => {
       console.log(`Task "${argv['0']}" failed.`)
       if (e.code == 'ENOENT') {
         console.log('ERR: No such file or directory')

@@ -9,10 +9,13 @@ function parse(argv) {
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
         if (arg.match(keyRegex)) {
-            key = arg.replace(keyRegex, '');
-            const next = argv[i + 1];
-            if (next && !next.match(keyRegex)) {
-                parameters[key] = next;
+            const split = arg.split(/=/);
+            key = split[0].replace(keyRegex, '');
+            if (split[1]) {
+                parameters[key] = split[1];
+            }
+            else if (argv[i + 1] && !argv[i + 1].match(keyRegex)) {
+                parameters[key] = argv[i + 1];
                 i++;
             }
             else {
@@ -30,10 +33,7 @@ function parse(argv) {
 exports.parse = parse;
 function execute(command, args, options) {
     return new Promise((resolve, reject) => {
-        const ps = child_process_1.spawn(command, args, {
-            shell: true,
-            stdio: "inherit"
-        });
+        const ps = child_process_1.spawn(command, args, options);
         ps.on('error', reject);
         ps.on('exit', (code, signal) => {
             resolve([code, signal]);

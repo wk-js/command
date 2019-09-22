@@ -11,11 +11,21 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const toml_1 = __importDefault(require("toml"));
-const fs_1 = require("lol/js/node/fs");
 const Path = __importStar(require("path"));
 const Fs = __importStar(require("fs"));
 const utils_1 = require("./utils");
 const task_list_1 = require("./task-list");
+function isFile(path) {
+    try {
+        var stat = Fs.statSync(path);
+        if (!stat.isFile())
+            throw 'Not a file';
+    }
+    catch (e) {
+        return false;
+    }
+    return true;
+}
 function fetch_commands(argv) {
     const paths = [
         argv['wk.commands'],
@@ -25,7 +35,7 @@ function fetch_commands(argv) {
     ];
     for (let i = 0; i < paths.length; i++) {
         const file = paths[i];
-        if (typeof file == 'string' && fs_1.isFile(file)) {
+        if (typeof file == 'string' && isFile(file)) {
             const content = Fs.readFileSync(file, "utf-8");
             if (file == 'package.json') {
                 return JSON.parse(content);
@@ -56,16 +66,38 @@ function main() {
                 c.cwd(command.cwd);
             if (command.args)
                 c.args(...command.args);
+            if (command.binPath)
+                c.binPath(command.binPath);
+            if (command.visible)
+                c.visible(command.visible);
             if (command.dependsOn)
                 c.dependsOn(...command.dependsOn);
             if (command.description)
                 c.description(command.description);
-            if (command.visible)
-                c.visible(command.visible);
         }
     });
     if (typeof argv['0'] == 'string') {
-        list.run(argv['0']).catch((e) => {
+        list.run(argv['0'], (task) => {
+            Object.keys(argv).forEach((key) => {
+                const literal = task.toLiteral();
+                if (!key.match(/wk\./)) {
+                    if (!isNaN(parseFloat(key))) {
+                        if (argv[key] != literal.cmd)
+                            task.arg(argv[key]);
+                    }
+                    else if (key.length == 1 && typeof argv[key] == 'boolean') {
+                        task.arg(`-${key}`);
+                    }
+                    else if (typeof argv[key] == 'boolean') {
+                        task.arg(`--${key}`);
+                    }
+                    else {
+                        task.arg(`--${key} ${argv[key]}`);
+                    }
+                }
+            });
+        })
+            .catch((e) => {
             console.log(`Task "${argv['0']}" failed.`);
             if (e.code == 'ENOENT') {
                 console.log('ERR: No such file or directory');

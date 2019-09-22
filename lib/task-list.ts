@@ -1,5 +1,6 @@
 import { Task } from "./task";
 import { execute } from "./utils";
+import * as Path from 'path';
 
 export class TaskList {
 
@@ -21,7 +22,7 @@ export class TaskList {
     return Object.keys(this._tasks).map((name) => {
       return {
         name,
-        ...this._tasks[name].to_literal()
+        ...this._tasks[name].toLiteral()
       }
     })
   }
@@ -61,16 +62,18 @@ export class TaskList {
       edit(command)
     }
 
-    const task = command.to_literal()
+    const task = command.toLiteral()
 
     if (task.dependencies.length > 0) {
       await this.serie(...task.dependencies)
     }
 
     const env = Object.assign({ FORCE_COLOR: true }, process.env)
+    const cmd = task.binPath.length > 0 ? Path.join(task.binPath, task.cmd) : task.cmd
 
-    return execute(task.cmd, task.args, {
+    return execute(cmd, task.args, {
       cwd: task.cwd,
+      stdio: "inherit",
       env
     })
   }

@@ -6,6 +6,7 @@ export declare class TaskList {
     description(): {
         cwd: string;
         cmd: string;
+        binPath: string;
         description: string;
         visible: boolean;
         args: string[];
