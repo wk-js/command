@@ -18,6 +18,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const task_1 = require("./task");
 const utils_1 = require("./utils");
 const Path = __importStar(require("path"));
+const Log = __importStar(require("./log"));
 class TaskList {
     constructor() {
         this._tasks = {};
@@ -60,7 +61,7 @@ class TaskList {
     run(name, edit) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this._tasks[name]) {
-                console.log(`Task with name "${name}" not found`);
+                Log.warn(`Task with name "${name}" not found`);
                 return new Promise((resolve) => resolve([0, ""]));
             }
             let command = this._tasks[name];
@@ -74,6 +75,7 @@ class TaskList {
             }
             const env = Object.assign({ FORCE_COLOR: true }, process.env);
             const cmd = task.binPath.length > 0 ? Path.join(task.binPath, task.cmd) : task.cmd;
+            Log.command(`${cmd} ${task.args.join(' ')}`, task.cwd);
             return utils_1.execute(cmd, task.args, {
                 cwd: task.cwd,
                 stdio: "inherit",

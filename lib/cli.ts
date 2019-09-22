@@ -3,6 +3,7 @@ import * as Path from "path";
 import * as Fs from "fs";
 import { parse } from "./utils";
 import { TaskList } from "./task-list";
+import * as Log from './log';
 
 interface ICommand {
   command: string
@@ -60,7 +61,12 @@ function main() {
 
   const file = fetch_commands(argv)
   if (!file || !file.commands) {
-    console.log(`No Commands.toml or package.json with "commands" property found`)
+    Log.warn(`No commands found. One of them is required:`)
+    Log.list([
+      `Commands.toml with "commands" property`,
+      `package.json with "commands" property`,
+      `"--wk.commands=MY_PATH" in arguments`
+    ])
     return
   }
 
@@ -98,24 +104,25 @@ function main() {
       })
     })
     .catch((e) => {
-      console.log(`Task "${argv['0']}" failed.`)
+      Log.err(`Task "${argv['0']}" failed.`)
       if (e.code == 'ENOENT') {
-        console.log('ERR: No such file or directory')
-      } else {
-        console.log(e)
+        Log.err('ERR: No such file or directory')
       }
+      Log.err(e)
     })
   } else {
     console.log(`Tasks availables`)
+    const tasks: any[] = []
     list.description().forEach((task) => {
       if (task.visible) {
         if (task.description) {
-          console.log("*", task.name, '-', task.description)
+          tasks.push( [task.name, task.description] )
         } else {
-          console.log("*", task.name)
+          tasks.push( task.name )
         }
       }
     })
+    Log.list(tasks)
   }
 }
 

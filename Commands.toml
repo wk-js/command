@@ -1,8 +1,9 @@
 [commands.tsc]
 command = "tsc"
 binPath = "./node_modules/.bin"
+description = "Compile .ts files"
 
 [commands.mocha]
-command = "mocha"
+command = "mocha -r ts-node/register ./test/**/*.spec.ts"
 binPath = "./node_modules/.bin"
-args = [ "-r ts-node/register ./test/**/*.spec.ts" ]
+description = "Run tests"

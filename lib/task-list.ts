@@ -1,6 +1,7 @@
 import { Task } from "./task";
 import { execute } from "./utils";
 import * as Path from 'path';
+import * as Log from './log';
 
 export class TaskList {
 
@@ -51,7 +52,7 @@ export class TaskList {
 
   async run(name: string, edit?: (task: Task) => void) {
     if (!this._tasks[name]) {
-      console.log(`Task with name "${name}" not found`)
+      Log.warn(`Task with name "${name}" not found`)
       return new Promise<[number, string]>((resolve) => resolve([0, ""]))
     }
 
@@ -70,6 +71,7 @@ export class TaskList {
 
     const env = Object.assign({ FORCE_COLOR: true }, process.env)
     const cmd = task.binPath.length > 0 ? Path.join(task.binPath, task.cmd) : task.cmd
+    Log.command(`${cmd} ${task.args.join(' ')}`, task.cwd)
 
     return execute(cmd, task.args, {
       cwd: task.cwd,

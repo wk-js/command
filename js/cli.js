@@ -15,6 +15,7 @@ const Path = __importStar(require("path"));
 const Fs = __importStar(require("fs"));
 const utils_1 = require("./utils");
 const task_list_1 = require("./task-list");
+const Log = __importStar(require("./log"));
 function isFile(path) {
     try {
         var stat = Fs.statSync(path);
@@ -51,7 +52,12 @@ function main() {
     const argv = utils_1.parse(process.argv.slice(2));
     const file = fetch_commands(argv);
     if (!file || !file.commands) {
-        console.log(`No Commands.toml or package.json with "commands" property found`);
+        Log.warn(`No commands found. One of them is required:`);
+        Log.list([
+            `Commands.toml with "commands" property`,
+            `package.json with "commands" property`,
+            `"--wk.commands=MY_PATH" in arguments`
+        ]);
         return;
     }
     const list = task_list_1.TaskList.create();
@@ -97,27 +103,27 @@ function main() {
             });
         })
             .catch((e) => {
-            console.log(`Task "${argv['0']}" failed.`);
+            Log.err(`Task "${argv['0']}" failed.`);
             if (e.code == 'ENOENT') {
-                console.log('ERR: No such file or directory');
+                Log.err('ERR: No such file or directory');
             }
-            else {
-                console.log(e);
-            }
+            Log.err(e);
         });
     }
     else {
         console.log(`Tasks availables`);
+        const tasks = [];
         list.description().forEach((task) => {
             if (task.visible) {
                 if (task.description) {
-                    console.log("*", task.name, '-', task.description);
+                    tasks.push([task.name, task.description]);
                 }
                 else {
-                    console.log("*", task.name);
+                    tasks.push(task.name);
                 }
             }
         });
+        Log.list(tasks);
     }
 }
 main();

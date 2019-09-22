@@ -14,7 +14,9 @@
     "url": "https://github.com/wk-js/command"
   },
   "dependencies": {
-    "toml": "^3.0.0"
+    "chalk": "^2.4.2",
+    "toml": "^3.0.0",
+    "lol": "github:wk-js/lol.js#0.0.7"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
