@@ -1,6 +1,11 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
@@ -10,120 +15,39 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const toml_1 = __importDefault(require("toml"));
-const Path = __importStar(require("path"));
-const Fs = __importStar(require("fs"));
-const utils_1 = require("./utils");
-const task_list_1 = require("./task-list");
+const utils_1 = require("./cli/utils");
+const utils_2 = require("./utils");
+const runner_1 = require("./runner");
 const Log = __importStar(require("./log"));
-function isFile(path) {
-    try {
-        var stat = Fs.statSync(path);
-        if (!stat.isFile())
-            throw 'Not a file';
-    }
-    catch (e) {
-        return false;
-    }
-    return true;
-}
-function fetch_commands(argv) {
-    const paths = [
-        argv['wk.commands'],
-        Path.join(process.cwd(), 'Commands.toml'),
-        Path.join(process.cwd(), 'commands.toml'),
-        'package.json'
-    ];
-    for (let i = 0; i < paths.length; i++) {
-        const file = paths[i];
-        if (typeof file == 'string' && isFile(file)) {
-            const content = Fs.readFileSync(file, "utf-8");
-            if (file == 'package.json') {
-                return JSON.parse(content);
-            }
-            else {
-                return toml_1.default.parse(content);
-            }
-        }
-    }
-    return null;
-}
+const argv = utils_2.parse(process.argv.slice(2));
 function main() {
-    const argv = utils_1.parse(process.argv.slice(2));
-    const file = fetch_commands(argv);
-    if (!file || !file.commands) {
-        Log.warn(`No commands found. One of them is required:`);
-        Log.list([
-            `Commands.toml with "commands" property`,
-            `package.json with "commands" property`,
-            `"--wk.commands=MY_PATH" in arguments`
-        ]);
-        return;
-    }
-    const list = task_list_1.TaskList.create();
-    Object.keys(file.commands).forEach((name) => {
-        const command = file.commands[name];
-        if (typeof command == 'string') {
-            list.register(name, command);
+    return __awaiter(this, void 0, void 0, function* () {
+        let commands;
+        if (argv['wk.commands']) {
+            commands = utils_1.load(argv['wk.commands']);
         }
         else {
-            const c = list.register(name, command.command);
-            if (command.cwd)
-                c.cwd(command.cwd);
-            if (command.args)
-                c.args(...command.args);
-            if (command.binPath)
-                c.binPath(command.binPath);
-            if (command.visible)
-                c.visible(command.visible);
-            if (command.dependsOn)
-                c.dependsOn(...command.dependsOn);
-            if (command.description)
-                c.description(command.description);
+            commands = utils_1.lookup();
+        }
+        const runner = new runner_1.Runner(utils_1.create_list(commands));
+        if (typeof argv['0'] == 'string') {
+            return runner.run(argv['0'], (task) => {
+                utils_1.pass_args(task, argv);
+            });
+        }
+        else {
+            utils_1.help();
+            process.stdout.write('\n');
+            utils_1.list_tasks(runner.tasks);
         }
     });
-    if (typeof argv['0'] == 'string') {
-        list.run(argv['0'], (task) => {
-            Object.keys(argv).forEach((key) => {
-                if (!key.match(/wk\./)) {
-                    if (!isNaN(parseFloat(key))) {
-                        if (argv[key] != argv['0'])
-                            task.arg(argv[key]);
-                    }
-                    else if (key.length == 1 && typeof argv[key] == 'boolean') {
-                        task.arg(`-${key}`);
-                    }
-                    else if (typeof argv[key] == 'boolean') {
-                        task.arg(`--${key}`);
-                    }
-                    else {
-                        task.arg(`--${key} ${argv[key]}`);
-                    }
-                }
-            });
-        })
-            .catch((e) => {
-            Log.err(`Task "${argv['0']}" failed.`);
-            if (e.code == 'ENOENT') {
-                Log.err('ERR: No such file or directory');
-            }
-            Log.err(e);
-        });
+}
+main()
+    .catch((e) => {
+    if (argv['wk.verbose']) {
+        Log.err(e);
     }
     else {
-        console.log(`Tasks availables`);
-        const tasks = [];
-        list.description().forEach((task) => {
-            if (task.visible) {
-                if (task.description) {
-                    tasks.push([task.name, task.description]);
-                }
-                else {
-                    tasks.push(task.name);
-                }
-            }
-        });
-        Log.list(tasks);
+        Log.err(e.message);
     }
-}
-main();
+});

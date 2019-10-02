@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class Task {
     constructor(_cmd) {
+        this._name = "task";
         this._cwd = process.cwd();
         this._args = [];
         this._depends = [];
@@ -27,6 +28,10 @@ class Task {
         this._binPath = command._binPath;
         this._visible = command._visible;
         this._description = command._description;
+        return this;
+    }
+    name(_name) {
+        this._name = _name;
         return this;
     }
     cwd(_cwd) {
@@ -63,6 +68,7 @@ class Task {
     }
     toLiteral() {
         return {
+            name: this._name,
             cwd: this._cwd,
             cmd: this._cmd,
             binPath: this._binPath,

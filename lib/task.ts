@@ -1,5 +1,6 @@
 export class Task {
 
+  private _name: string = "task"
   private _cmd: string
   private _cwd: string = process.cwd()
   private _args: string[] = []
@@ -31,6 +32,11 @@ export class Task {
     this._binPath = command._binPath
     this._visible = command._visible
     this._description = command._description
+    return this
+  }
+
+  name(_name: string) {
+    this._name = _name
     return this
   }
 
@@ -75,6 +81,7 @@ export class Task {
 
   toLiteral() {
     return {
+      name: this._name,
       cwd: this._cwd,
       cmd: this._cmd,
       binPath: this._binPath,

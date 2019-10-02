@@ -2,18 +2,9 @@ import { Task } from "./task";
 export declare class TaskList {
     private _tasks;
     static create(): TaskList;
-    register(name: string, task: string, edit?: (task: Task) => void): Task;
-    description(): {
-        cwd: string;
-        cmd: string;
-        binPath: string;
-        description: string;
-        visible: boolean;
-        args: string[];
-        dependencies: string[];
-        name: string;
-    }[];
-    parallel(...names: string[]): Promise<[number, string][]>;
-    serie(...names: string[]): Promise<[number, string][]>;
-    run(name: string, edit?: (task: Task) => void): Promise<[number, string]>;
+    add(name: string, command: string, edit?: (task: Task) => void): Task;
+    remove(name: string): void;
+    clone(name: string, newName: string, edit?: (task: Task) => void): void;
+    find(name: string): Task;
+    all(): Task[];
 }
