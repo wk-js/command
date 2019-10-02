@@ -98,7 +98,7 @@ function create_list(commands) {
             c.source(command.source);
         if (command.binPath)
             c.binPath(command.binPath);
-        if (command.visible)
+        if (typeof command.visible == 'boolean')
             c.visible(command.visible);
         if (command.dependsOn)
             c.dependsOn(...command.dependsOn);

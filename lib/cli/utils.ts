@@ -115,7 +115,7 @@ export function create_list(commands: CommandRecord) {
     if (command.args) c.args(...command.args)
     if (command.source) c.source(command.source)
     if (command.binPath) c.binPath(command.binPath)
-    if (command.visible) c.visible(command.visible)
+    if (typeof command.visible == 'boolean') c.visible(command.visible)
     if (command.dependsOn) c.dependsOn(...command.dependsOn)
     if (command.description) c.description(command.description)
   })

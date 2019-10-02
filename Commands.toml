@@ -7,3 +7,4 @@ description = "Compile .ts files"
 command = "mocha -r ts-node/register ./test/**/*.spec.ts"
 binPath = "./node_modules/.bin"
 description = "Run tests"
+visible = false
