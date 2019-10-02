@@ -1,4 +1,4 @@
-import { isFile } from 'lol/js/node/fs'
+import { isFile, fetch } from 'lol/js/node/fs'
 import { merge } from 'lol/js/object'
 import * as Path from 'path'
 import * as Fs from 'fs'
@@ -6,6 +6,7 @@ import TOML from "toml";
 import { TaskList } from '../task-list';
 import * as Log from '../log';
 import { Task } from '../task';
+import * as Os from 'os';
 
 export type CommandRecord = Record<string, Command>
 export type CommandAlias = Record<string, string|Command>
@@ -23,12 +24,13 @@ export interface Command {
 }
 
 export interface Config {
+  global?: boolean|string
   extends?: string[]
   commands: CommandRecord
   aliases?: CommandAlias
 }
 
-export function load(path: string): CommandRecord {
+function _load(path: string, importGlobal = false): CommandRecord {
   let config: Config = { commands: {} }
   if (!isFile(path)) {
     throw new Error(`"${path}" is not a file`)
@@ -45,6 +47,8 @@ export function load(path: string): CommandRecord {
   } catch (e) {
     throw new Error(`Cannot parse "${path}"`)
   }
+
+  importGlobal = typeof config.global == 'boolean' ? config.global : importGlobal
 
   // Replace string to literal
   for (const key in config.commands) {
@@ -87,7 +91,19 @@ export function load(path: string): CommandRecord {
     }
   }
 
+  if (importGlobal) {
+    if (typeof config.global == 'string') {
+      config.commands = merge(auto_imports(config.global), config.commands)
+    } else {
+      config.commands = merge(auto_imports(), config.commands)
+    }
+  }
+
   return config.commands
+}
+
+export function load(path: string) {
+  return _load(path, true)
 }
 
 export function lookup(): CommandRecord {
@@ -123,13 +139,14 @@ export function create_list(commands: CommandRecord) {
   return list
 }
 
-export function list_tasks(list: TaskList, display_source = false) {
+export function list_tasks(list: TaskList, verbose = false) {
   console.log('Task availables')
   const tasks: (string | [string, string])[] = list.all()
     .map(t => t.toLiteral())
-    .filter(t => t.visible)
+    .filter(t => verbose ? verbose : t.visible)
     .map(t => {
-      let description = display_source ? `(From "${t.source}")` : ""
+      let description = verbose ? `(From "${t.source}")` : ""
+      description = verbose && !t.visible ? `[Hidden]` : ""
       if (t.description) description = `${t.description} ${description}`
       return [t.name, description]
     })
@@ -158,4 +175,15 @@ export function pass_args(task: Task, argv: Record<string, string | boolean>) {
       }
     }
   })
+}
+
+export function auto_imports(path: string = Path.join(Os.homedir(), '.wk')) {
+  let commands: CommandRecord = {}
+  fetch([
+    Path.join(path, '**/*.toml'),
+    Path.join(path, '**/*.json')
+  ]).forEach((file) => {
+    commands = merge(commands, _load(file, false))
+  })
+  return commands
 }

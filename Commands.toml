@@ -1,3 +1,5 @@
+global = false
+
 [commands.tsc]
 command = "tsc"
 binPath = "./node_modules/.bin"

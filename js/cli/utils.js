@@ -17,7 +17,8 @@ const Fs = __importStar(require("fs"));
 const toml_1 = __importDefault(require("toml"));
 const task_list_1 = require("../task-list");
 const Log = __importStar(require("../log"));
-function load(path) {
+const Os = __importStar(require("os"));
+function _load(path, importGlobal = false) {
     let config = { commands: {} };
     if (!fs_1.isFile(path)) {
         throw new Error(`"${path}" is not a file`);
@@ -34,6 +35,7 @@ function load(path) {
     catch (e) {
         throw new Error(`Cannot parse "${path}"`);
     }
+    importGlobal = typeof config.global == 'boolean' ? config.global : importGlobal;
     // Replace string to literal
     for (const key in config.commands) {
         let command = config.commands[key];
@@ -67,7 +69,18 @@ function load(path) {
             config.commands[key] = all;
         }
     }
+    if (importGlobal) {
+        if (typeof config.global == 'string') {
+            config.commands = object_1.merge(auto_imports(config.global), config.commands);
+        }
+        else {
+            config.commands = object_1.merge(auto_imports(), config.commands);
+        }
+    }
     return config.commands;
+}
+function load(path) {
+    return _load(path, true);
 }
 exports.load = load;
 function lookup() {
@@ -108,13 +121,14 @@ function create_list(commands) {
     return list;
 }
 exports.create_list = create_list;
-function list_tasks(list, display_source = false) {
+function list_tasks(list, verbose = false) {
     console.log('Task availables');
     const tasks = list.all()
         .map(t => t.toLiteral())
-        .filter(t => t.visible)
+        .filter(t => verbose ? verbose : t.visible)
         .map(t => {
-        let description = display_source ? `(From "${t.source}")` : "";
+        let description = verbose ? `(From "${t.source}")` : "";
+        description = verbose && !t.visible ? `[Hidden]` : "";
         if (t.description)
             description = `${t.description} ${description}`;
         return [t.name, description];
@@ -150,3 +164,14 @@ function pass_args(task, argv) {
     });
 }
 exports.pass_args = pass_args;
+function auto_imports(path = Path.join(Os.homedir(), '.wk')) {
+    let commands = {};
+    fs_1.fetch([
+        Path.join(path, '**/*.toml'),
+        Path.join(path, '**/*.json')
+    ]).forEach((file) => {
+        commands = object_1.merge(commands, _load(file, false));
+    });
+    return commands;
+}
+exports.auto_imports = auto_imports;

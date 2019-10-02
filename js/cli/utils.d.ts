@@ -14,13 +14,15 @@ export interface Command {
     dependsOn?: string[];
 }
 export interface Config {
+    global?: boolean | string;
     extends?: string[];
     commands: CommandRecord;
     aliases?: CommandAlias;
 }
-export declare function load(path: string): CommandRecord;
+export declare function load(path: string): Record<string, Command>;
 export declare function lookup(): CommandRecord;
 export declare function create_list(commands: CommandRecord): TaskList;
-export declare function list_tasks(list: TaskList, display_source?: boolean): void;
+export declare function list_tasks(list: TaskList, verbose?: boolean): void;
 export declare function help(): void;
 export declare function pass_args(task: Task, argv: Record<string, string | boolean>): void;
+export declare function auto_imports(path?: string): Record<string, Command>;
