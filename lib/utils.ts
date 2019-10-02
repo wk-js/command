@@ -40,7 +40,7 @@ export function parse(argv: string[]) {
 
 }
 
-export function execute(command: string, args: string[], options: SpawnOptions) {
+export function execute(command: string, args?: string[], options?: SpawnOptions) {
   return new Promise<[number, string]>((resolve, reject) => {
     const ps = spawn(command, args, options)
 

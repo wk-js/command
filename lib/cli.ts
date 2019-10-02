@@ -1,8 +1,9 @@
-import { load, lookup, create_list, CommandRecord, list_tasks, pass_args, help } from './cli/utils';
+import { create_list, list_tasks, pass_args, help } from './cli/utils';
 import { parse } from "./utils";
 import { Runner } from './runner';
 import { Task } from './task';
 import * as Log from './log';
+import { CommandRecord, load, lookup } from './importer';
 
 const argv = parse(process.argv.slice(2))
 
@@ -12,9 +13,9 @@ async function main() {
   const importGlobals = typeof argv['wk.noglobal'] == 'boolean' ? !argv['wk.noglobal'] as boolean : true
 
   if (argv['wk.commands']) {
-    commands = load(argv['wk.commands'] as string, importGlobals)
+    commands = await load(argv['wk.commands'] as string, importGlobals)
   } else {
-    commands = lookup(importGlobals)
+    commands = await lookup(importGlobals)
   }
 
   const runner = new Runner(create_list(commands))

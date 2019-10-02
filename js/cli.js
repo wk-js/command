@@ -19,16 +19,17 @@ const utils_1 = require("./cli/utils");
 const utils_2 = require("./utils");
 const runner_1 = require("./runner");
 const Log = __importStar(require("./log"));
+const importer_1 = require("./importer");
 const argv = utils_2.parse(process.argv.slice(2));
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         let commands;
         const importGlobals = typeof argv['wk.noglobal'] == 'boolean' ? !argv['wk.noglobal'] : true;
         if (argv['wk.commands']) {
-            commands = utils_1.load(argv['wk.commands'], importGlobals);
+            commands = yield importer_1.load(argv['wk.commands'], importGlobals);
         }
         else {
-            commands = utils_1.lookup(importGlobals);
+            commands = yield importer_1.lookup(importGlobals);
         }
         const runner = new runner_1.Runner(utils_1.create_list(commands));
         if (typeof argv['0'] == 'string') {
