@@ -18,7 +18,7 @@ const toml_1 = __importDefault(require("toml"));
 const task_list_1 = require("../task-list");
 const Log = __importStar(require("../log"));
 const Os = __importStar(require("os"));
-function _load(path, importGlobal = false) {
+function _load(path, importGlobals = true) {
     let config = { commands: {} };
     if (!fs_1.isFile(path)) {
         throw new Error(`"${path}" is not a file`);
@@ -35,7 +35,12 @@ function _load(path, importGlobal = false) {
     catch (e) {
         throw new Error(`Cannot parse "${path}"`);
     }
-    importGlobal = typeof config.global == 'boolean' ? config.global : importGlobal;
+    importGlobals = typeof config.importGlobals == 'boolean' ? config.importGlobals && importGlobals : importGlobals;
+    // Auto import global tasks
+    if (importGlobals) {
+        const global_dir = Path.join(Os.homedir(), '.wk');
+        config.commands = object_1.merge(load(Path.join(global_dir, '**/*.{json,toml}'), false), config.commands);
+    }
     // Replace string to literal
     for (const key in config.commands) {
         let command = config.commands[key];
@@ -45,9 +50,10 @@ function _load(path, importGlobal = false) {
         config.commands[key].source = path;
     }
     // Load extended files
-    if (config.extends != null) {
-        for (const e of config.extends) {
-            config.commands = object_1.merge(load(e), config.commands);
+    if (config.imports != null) {
+        for (const e of config.imports) {
+            // config.commands = merge(load(e), config.commands)
+            config.commands = object_1.merge(load(e, importGlobals), config.commands);
         }
     }
     // Resolve aliases
@@ -69,21 +75,29 @@ function _load(path, importGlobal = false) {
             config.commands[key] = all;
         }
     }
-    if (importGlobal) {
-        if (typeof config.global == 'string') {
-            config.commands = object_1.merge(auto_imports(config.global), config.commands);
-        }
-        else {
-            config.commands = object_1.merge(auto_imports(), config.commands);
-        }
-    }
     return config.commands;
 }
-function load(path) {
-    return _load(path, true);
+function load(path, importGlobal = true) {
+    let commands = {};
+    fs_1.fetch(path)
+        .forEach((file) => {
+        commands = object_1.merge(commands, _load(file, importGlobal));
+    });
+    return commands;
 }
 exports.load = load;
-function lookup() {
+function load_directory(path, importGlobal = true) {
+    let commands = {};
+    fs_1.fetch([
+        Path.join(path, '**/*.toml'),
+        Path.join(path, '**/*.json')
+    ]).forEach((file) => {
+        commands = object_1.merge(commands, load(file, importGlobal));
+    });
+    return commands;
+}
+exports.load_directory = load_directory;
+function lookup(importGlobal = true) {
     const paths = [
         Path.join(process.cwd(), 'Commands.toml'),
         Path.join(process.cwd(), 'commands.toml'),
@@ -91,7 +105,7 @@ function lookup() {
     ];
     for (const p of paths) {
         if (fs_1.isFile(p))
-            return load(p);
+            return load(p, importGlobal);
     }
     throw new Error('No commands found.');
 }
@@ -140,6 +154,7 @@ function help() {
     console.log('Parameters availables');
     Log.list([
         ['--wk.commands=[PATH]', 'Set commands file path'],
+        ['--wk.noglobal', 'Do not import global tasks'],
         ['--wk.verbose', 'Display error stack']
     ]);
 }
@@ -164,14 +179,3 @@ function pass_args(task, argv) {
     });
 }
 exports.pass_args = pass_args;
-function auto_imports(path = Path.join(Os.homedir(), '.wk')) {
-    let commands = {};
-    fs_1.fetch([
-        Path.join(path, '**/*.toml'),
-        Path.join(path, '**/*.json')
-    ]).forEach((file) => {
-        commands = object_1.merge(commands, _load(file, false));
-    });
-    return commands;
-}
-exports.auto_imports = auto_imports;

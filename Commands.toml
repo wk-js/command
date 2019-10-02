@@ -1,4 +1,4 @@
-global = false
+importGlobals = true
 
 [commands.tsc]
 command = "tsc"

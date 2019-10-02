@@ -24,13 +24,13 @@ export interface Command {
 }
 
 export interface Config {
-  global?: boolean|string
-  extends?: string[]
+  importGlobals?: boolean
+  imports?: string[]
   commands: CommandRecord
   aliases?: CommandAlias
 }
 
-function _load(path: string, importGlobal = false): CommandRecord {
+function _load(path: string, importGlobals = true): CommandRecord {
   let config: Config = { commands: {} }
   if (!isFile(path)) {
     throw new Error(`"${path}" is not a file`)
@@ -48,7 +48,13 @@ function _load(path: string, importGlobal = false): CommandRecord {
     throw new Error(`Cannot parse "${path}"`)
   }
 
-  importGlobal = typeof config.global == 'boolean' ? config.global : importGlobal
+  importGlobals = typeof config.importGlobals == 'boolean' ? config.importGlobals && importGlobals : importGlobals
+
+  // Auto import global tasks
+  if (importGlobals) {
+    const global_dir = Path.join(Os.homedir(), '.wk')
+    config.commands = merge(load(Path.join(global_dir, '**/*.{json,toml}'), false), config.commands)
+  }
 
   // Replace string to literal
   for (const key in config.commands) {
@@ -61,9 +67,10 @@ function _load(path: string, importGlobal = false): CommandRecord {
   }
 
   // Load extended files
-  if (config.extends != null) {
-    for (const e of config.extends) {
-      config.commands = merge(load(e), config.commands)
+  if (config.imports != null) {
+    for (const e of config.imports) {
+      // config.commands = merge(load(e), config.commands)
+      config.commands = merge(load(e, importGlobals), config.commands)
     }
   }
 
@@ -91,22 +98,30 @@ function _load(path: string, importGlobal = false): CommandRecord {
     }
   }
 
-  if (importGlobal) {
-    if (typeof config.global == 'string') {
-      config.commands = merge(auto_imports(config.global), config.commands)
-    } else {
-      config.commands = merge(auto_imports(), config.commands)
-    }
-  }
-
   return config.commands
 }
 
-export function load(path: string) {
-  return _load(path, true)
+export function load(path: string, importGlobal = true) {
+  let commands: CommandRecord = {}
+  fetch(path)
+  .forEach((file) => {
+    commands = merge(commands, _load(file, importGlobal))
+  })
+  return commands
 }
 
-export function lookup(): CommandRecord {
+export function load_directory(path: string, importGlobal = true) {
+  let commands: CommandRecord = {}
+  fetch([
+    Path.join(path, '**/*.toml'),
+    Path.join(path, '**/*.json')
+  ]).forEach((file) => {
+    commands = merge(commands, load(file, importGlobal))
+  })
+  return commands
+}
+
+export function lookup(importGlobal = true): CommandRecord {
   const paths = [
     Path.join(process.cwd(), 'Commands.toml'),
     Path.join(process.cwd(), 'commands.toml'),
@@ -114,7 +129,7 @@ export function lookup(): CommandRecord {
   ]
 
   for (const p of paths) {
-    if (isFile(p)) return load(p)
+    if (isFile(p)) return load(p, importGlobal)
   }
 
   throw new Error('No commands found.')
@@ -157,6 +172,7 @@ export function help() {
   console.log('Parameters availables')
   Log.list([
     ['--wk.commands=[PATH]', 'Set commands file path'],
+    ['--wk.noglobal', 'Do not import global tasks'],
     ['--wk.verbose', 'Display error stack']
   ])
 }
@@ -175,15 +191,4 @@ export function pass_args(task: Task, argv: Record<string, string | boolean>) {
       }
     }
   })
-}
-
-export function auto_imports(path: string = Path.join(Os.homedir(), '.wk')) {
-  let commands: CommandRecord = {}
-  fetch([
-    Path.join(path, '**/*.toml'),
-    Path.join(path, '**/*.json')
-  ]).forEach((file) => {
-    commands = merge(commands, _load(file, false))
-  })
-  return commands
 }

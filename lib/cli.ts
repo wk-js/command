@@ -9,10 +9,12 @@ const argv = parse(process.argv.slice(2))
 async function main() {
   let commands: CommandRecord
 
+  const importGlobals = typeof argv['wk.noglobal'] == 'boolean' ? !argv['wk.noglobal'] as boolean : true
+
   if (argv['wk.commands']) {
-    commands = load(argv['wk.commands'] as string)
+    commands = load(argv['wk.commands'] as string, importGlobals)
   } else {
-    commands = lookup()
+    commands = lookup(importGlobals)
   }
 
   const runner = new Runner(create_list(commands))
