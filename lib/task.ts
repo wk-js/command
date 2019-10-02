@@ -8,6 +8,7 @@ export class Task {
   private _binPath: string = ""
   private _visible: boolean = true
   private _description: string = ""
+  private _source: string = ""
 
   constructor(_cmd: string) {
     const args = _cmd.split(/\s/)
@@ -55,6 +56,11 @@ export class Task {
     return this
   }
 
+  source(_source: string) {
+    this._source = _source
+    return this
+  }
+
   visible(_visible: boolean) {
     this._visible = _visible
     return this
@@ -84,6 +90,7 @@ export class Task {
       name: this._name,
       cwd: this._cwd,
       cmd: this._cmd,
+      source: this._source,
       binPath: this._binPath,
       description: this._description,
       visible: this._visible,

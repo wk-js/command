@@ -7,6 +7,7 @@ export declare class Task {
     private _binPath;
     private _visible;
     private _description;
+    private _source;
     constructor(_cmd: string);
     static create(command: string): Task;
     clone(): Task;
@@ -15,6 +16,7 @@ export declare class Task {
     cwd(_cwd: string): this;
     binPath(_binPath: string): this;
     description(_description: string): this;
+    source(_source: string): this;
     visible(_visible: boolean): this;
     arg(arg: string): this;
     args(...args: string[]): this;
@@ -23,6 +25,7 @@ export declare class Task {
         name: string;
         cwd: string;
         cmd: string;
+        source: string;
         binPath: string;
         description: string;
         visible: boolean;

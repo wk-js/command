@@ -61,6 +61,7 @@ class Runner {
             return utils_1.execute(cmd, task.args, {
                 cwd: task.cwd,
                 stdio: "inherit",
+                shell: true,
                 env
             });
         });

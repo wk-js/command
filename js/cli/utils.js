@@ -34,9 +34,37 @@ function load(path) {
     catch (e) {
         throw new Error(`Cannot parse "${path}"`);
     }
+    // Replace string to literal
+    for (const key in config.commands) {
+        let command = config.commands[key];
+        if (typeof command == 'string') {
+            config.commands[key] = { command };
+        }
+        config.commands[key].source = path;
+    }
+    // Load extended files
     if (config.extends != null) {
         for (const e of config.extends) {
             config.commands = object_1.merge(load(e), config.commands);
+        }
+    }
+    // Resolve aliases
+    if (config.aliases != null) {
+        for (const key in config.aliases) {
+            let alias = config.aliases[key];
+            if (typeof alias == 'string') {
+                alias = { command: alias };
+            }
+            let al = alias;
+            const command = config.commands[al.command];
+            if (!command) {
+                throw new Error(`Cannot alias "${key}" with "${al.command}"`);
+            }
+            const all = object_1.merge({}, command, al);
+            all.name = key;
+            all.command = command.command;
+            all.args = al.args || all.args;
+            config.commands[key] = all;
         }
     }
     return config.commands;
@@ -59,40 +87,37 @@ function create_list(commands) {
     const list = task_list_1.TaskList.create();
     Object.keys(commands).forEach((name) => {
         const command = commands[name];
-        if (typeof command == 'string') {
-            list.add(name, command);
-        }
-        else {
-            const c = list.add(name, command.command);
-            if (command.cwd)
-                c.cwd(command.cwd);
-            if (command.args)
-                c.args(...command.args);
-            if (command.binPath)
-                c.binPath(command.binPath);
-            if (command.visible)
-                c.visible(command.visible);
-            if (command.dependsOn)
-                c.dependsOn(...command.dependsOn);
-            if (command.description)
-                c.description(command.description);
-        }
+        const c = list.add(name, command.command);
+        if (command.cwd)
+            c.cwd(command.cwd);
+        if (command.name)
+            c.name(command.name);
+        if (command.args)
+            c.args(...command.args);
+        if (command.source)
+            c.source(command.source);
+        if (command.binPath)
+            c.binPath(command.binPath);
+        if (command.visible)
+            c.visible(command.visible);
+        if (command.dependsOn)
+            c.dependsOn(...command.dependsOn);
+        if (command.description)
+            c.description(command.description);
     });
     return list;
 }
 exports.create_list = create_list;
-function list_tasks(list) {
+function list_tasks(list, display_source = false) {
     console.log('Task availables');
     const tasks = list.all()
         .map(t => t.toLiteral())
         .filter(t => t.visible)
         .map(t => {
-        if (t.description) {
-            return [t.name, t.description];
-        }
-        else {
-            return t.name;
-        }
+        let description = display_source ? `(From "${t.source}")` : "";
+        if (t.description)
+            description = `${t.description} ${description}`;
+        return [t.name, description];
     });
     Log.list(tasks);
 }

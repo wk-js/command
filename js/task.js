@@ -9,6 +9,7 @@ class Task {
         this._binPath = "";
         this._visible = true;
         this._description = "";
+        this._source = "";
         const args = _cmd.split(/\s/);
         this._cmd = args.shift();
         this._args.push(...args);
@@ -46,6 +47,10 @@ class Task {
         this._description = _description;
         return this;
     }
+    source(_source) {
+        this._source = _source;
+        return this;
+    }
     visible(_visible) {
         this._visible = _visible;
         return this;
@@ -71,6 +76,7 @@ class Task {
             name: this._name,
             cwd: this._cwd,
             cmd: this._cmd,
+            source: this._source,
             binPath: this._binPath,
             description: this._description,
             visible: this._visible,

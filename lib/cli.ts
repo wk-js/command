@@ -24,7 +24,7 @@ async function main() {
   } else {
     help()
     process.stdout.write('\n')
-    list_tasks(runner.tasks)
+    list_tasks(runner.tasks, argv['wk.verbose'] as boolean)
   }
 }
 

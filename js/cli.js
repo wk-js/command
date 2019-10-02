@@ -38,7 +38,7 @@ function main() {
         else {
             utils_1.help();
             process.stdout.write('\n');
-            utils_1.list_tasks(runner.tasks);
+            utils_1.list_tasks(runner.tasks, argv['wk.verbose']);
         }
     });
 }

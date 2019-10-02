@@ -53,6 +53,7 @@ export class Runner {
     return execute(cmd, task.args, {
       cwd: task.cwd,
       stdio: "inherit",
+      shell: true,
       env
     })
   }
