@@ -72,14 +72,14 @@ class Runner {
             const env = Object.assign({ FORCE_COLOR: true }, process.env);
             const cmd = task.binPath.length > 0 ? Path.join(task.binPath, task.cmd) : task.cmd;
             Log.command(`${cmd} ${task.args.join(' ')}`, task.cwd);
-            const [code] = yield utils_1.execute(cmd, task.args, {
+            const [code, signal] = yield utils_1.execute(cmd, task.args, {
                 cwd: task.cwd,
                 stdio: "inherit",
                 shell: true,
                 env
             }).promise;
             results.push({
-                success: code == 0,
+                success: code == 0 || signal == 'SIGINT',
                 taskName: task.name
             });
             return results;
