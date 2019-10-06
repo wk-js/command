@@ -1,5 +1,3 @@
-importGlobals = true
-
 [commands.tsc]
 command = "tsc"
 binPath = "./node_modules/.bin"
@@ -9,4 +7,6 @@ description = "Compile .ts files"
 command = "mocha -r ts-node/register ./test/**/*.spec.ts"
 binPath = "./node_modules/.bin"
 description = "Run tests"
-visible = false
+
+[concurrents]
+test = [ "tsc --watch", "mocha" ]

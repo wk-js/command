@@ -1,13 +1,14 @@
 export declare class Task {
-    private _name;
     private _cmd;
     private _cwd;
+    private _name;
     private _args;
+    private _source;
     private _depends;
     private _binPath;
     private _visible;
+    private _concurrent;
     private _description;
-    private _source;
     constructor(_cmd: string);
     static create(command: string): Task;
     clone(): Task;
@@ -18,6 +19,7 @@ export declare class Task {
     description(_description: string): this;
     source(_source: string): this;
     visible(_visible: boolean): this;
+    concurrent(_concurrent: boolean): this;
     arg(arg: string): this;
     args(...args: string[]): this;
     dependsOn(...tasks: string[]): this;
@@ -29,6 +31,7 @@ export declare class Task {
         binPath: string;
         description: string;
         visible: boolean;
+        concurrent: boolean;
         args: string[];
         dependencies: string[];
     };

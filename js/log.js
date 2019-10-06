@@ -20,7 +20,7 @@ function err(...args) {
     console.log(chalk_1.default.red('[err]'), ...args);
 }
 exports.err = err;
-function list(args) {
+function list(args, type = 'default') {
     let length = 0;
     let gap = 3;
     for (let i = 0; i < args.length; i++) {
@@ -40,7 +40,12 @@ function list(args) {
         let str = chalk_1.default.grey('*') + ' ';
         if (Array.isArray(arg)) {
             str += string_1.pad(arg[0], length, ' ', true);
-            str += chalk_1.default.grey(arg[1]);
+            if (type == 'default') {
+                str += chalk_1.default.grey(arg[1]);
+            }
+            else if (type == 'success') {
+                str += arg[1] ? chalk_1.default.green('Success') : chalk_1.default.red('Failed');
+            }
         }
         else {
             str += arg;

@@ -1,16 +1,16 @@
 import { TaskList } from '../task-list';
 import * as Log from '../log';
-import { Task } from '../task';
-import { CommandRecord } from '../importer';
+import { Config } from '../importer';
+import { RunnerResult } from '../runner';
 
-export function create_list(commands: CommandRecord) {
+export function create_list(config: Config) {
   const list = TaskList.create()
 
-  Object.keys(commands).forEach((name) => {
-    const command = commands[name]
+  Object.keys(config.commands).forEach((name) => {
+    const command = config.commands[name]
     const c = list.add(name, command.command)
+    c.name(command.name ? command.name : name)
     if (command.cwd) c.cwd(command.cwd)
-    if (command.name) c.name(command.name)
     if (command.args) c.args(...command.args)
     if (command.source) c.source(command.source)
     if (command.binPath) c.binPath(command.binPath)
@@ -19,10 +19,19 @@ export function create_list(commands: CommandRecord) {
     if (command.description) c.description(command.description)
   })
 
+  Object.keys(config.concurrents).forEach((name) => {
+    const command = config.concurrents[name]
+    const c = list.add(name, '[concurrent]')
+
+    c.name(name)
+    c.concurrent(true)
+    c.dependsOn(...command)
+  })
+
   return list
 }
 
-export function list_tasks(list: TaskList, verbose = false) {
+export function print_tasks(list: TaskList, verbose = false) {
   console.log('Task availables')
   const tasks: (string | [string, string])[] = list.all()
     .map(t => t.toLiteral())
@@ -36,27 +45,18 @@ export function list_tasks(list: TaskList, verbose = false) {
   Log.list(tasks)
 }
 
-export function help() {
+export function print_help() {
   console.log('Parameters availables')
   Log.list([
     ['--wk.commands=[PATH]', 'Set commands file path'],
-    ['--wk.noglobal', 'Do not import global tasks'],
+    ['--wk.global', 'Import global tasks. Can accept "false" to disable'],
     ['--wk.verbose', 'Display error stack']
   ])
 }
 
-export function pass_args(task: Task, argv: Record<string, string | boolean>) {
-  Object.keys(argv).forEach((key) => {
-    if (!key.match(/^wk\./)) {
-      if (!isNaN(parseFloat(key))) {
-        if (argv[key] != argv['0']) task.arg(argv[key] as string)
-      } else if (key.length == 1 && typeof argv[key] == 'boolean') {
-        task.arg(`-${key}`)
-      } else if (typeof argv[key] == 'boolean') {
-        task.arg(`--${key}`)
-      } else {
-        task.arg(`--${key} ${argv[key]}`)
-      }
-    }
-  })
+export function print_results(results: RunnerResult[]) {
+  process.stdout.write('\n')
+  Log.list(results.map(r => {
+    return [ r.taskName, r.success ]
+  }), 'success')
 }

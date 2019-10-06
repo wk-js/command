@@ -46,24 +46,43 @@ class Runner {
     }
     run(name, edit) {
         return __awaiter(this, void 0, void 0, function* () {
-            let command = this.tasks.find(name);
+            const args = name.split(/\s/);
+            let command = this.tasks.find(args.shift());
+            if (args.length > 0) {
+                command = command.clone();
+                utils_1.transfert_parameters(command, utils_1.parse(args));
+            }
             if (typeof edit === 'function') {
                 command = command.clone();
                 edit(command);
             }
             const task = command.toLiteral();
+            let results = [];
+            if (task.concurrent) {
+                if (task.dependencies.length > 0) {
+                    const res0 = yield this.parallel(...task.dependencies);
+                    results = results.concat(...res0);
+                }
+                return results;
+            }
             if (task.dependencies.length > 0) {
-                yield this.serie(...task.dependencies);
+                const res1 = yield this.serie(...task.dependencies);
+                results = results.concat(...res1);
             }
             const env = Object.assign({ FORCE_COLOR: true }, process.env);
             const cmd = task.binPath.length > 0 ? Path.join(task.binPath, task.cmd) : task.cmd;
             Log.command(`${cmd} ${task.args.join(' ')}`, task.cwd);
-            return utils_1.execute(cmd, task.args, {
+            const [code] = yield utils_1.execute(cmd, task.args, {
                 cwd: task.cwd,
                 stdio: "inherit",
                 shell: true,
                 env
+            }).promise;
+            results.push({
+                success: code == 0,
+                taskName: task.name
             });
+            return results;
         });
     }
 }

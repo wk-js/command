@@ -9,15 +9,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const task_list_1 = require("../task-list");
 const Log = __importStar(require("../log"));
-function create_list(commands) {
+function create_list(config) {
     const list = task_list_1.TaskList.create();
-    Object.keys(commands).forEach((name) => {
-        const command = commands[name];
+    Object.keys(config.commands).forEach((name) => {
+        const command = config.commands[name];
         const c = list.add(name, command.command);
+        c.name(command.name ? command.name : name);
         if (command.cwd)
             c.cwd(command.cwd);
-        if (command.name)
-            c.name(command.name);
         if (command.args)
             c.args(...command.args);
         if (command.source)
@@ -31,10 +30,17 @@ function create_list(commands) {
         if (command.description)
             c.description(command.description);
     });
+    Object.keys(config.concurrents).forEach((name) => {
+        const command = config.concurrents[name];
+        const c = list.add(name, '[concurrent]');
+        c.name(name);
+        c.concurrent(true);
+        c.dependsOn(...command);
+    });
     return list;
 }
 exports.create_list = create_list;
-function list_tasks(list, verbose = false) {
+function print_tasks(list, verbose = false) {
     console.log('Task availables');
     const tasks = list.all()
         .map(t => t.toLiteral())
@@ -48,33 +54,20 @@ function list_tasks(list, verbose = false) {
     });
     Log.list(tasks);
 }
-exports.list_tasks = list_tasks;
-function help() {
+exports.print_tasks = print_tasks;
+function print_help() {
     console.log('Parameters availables');
     Log.list([
         ['--wk.commands=[PATH]', 'Set commands file path'],
-        ['--wk.noglobal', 'Do not import global tasks'],
+        ['--wk.global', 'Import global tasks. Can accept "false" to disable'],
         ['--wk.verbose', 'Display error stack']
     ]);
 }
-exports.help = help;
-function pass_args(task, argv) {
-    Object.keys(argv).forEach((key) => {
-        if (!key.match(/^wk\./)) {
-            if (!isNaN(parseFloat(key))) {
-                if (argv[key] != argv['0'])
-                    task.arg(argv[key]);
-            }
-            else if (key.length == 1 && typeof argv[key] == 'boolean') {
-                task.arg(`-${key}`);
-            }
-            else if (typeof argv[key] == 'boolean') {
-                task.arg(`--${key}`);
-            }
-            else {
-                task.arg(`--${key} ${argv[key]}`);
-            }
-        }
-    });
+exports.print_help = print_help;
+function print_results(results) {
+    process.stdout.write('\n');
+    Log.list(results.map(r => {
+        return [r.taskName, r.success];
+    }), 'success');
 }
-exports.pass_args = pass_args;
+exports.print_results = print_results;

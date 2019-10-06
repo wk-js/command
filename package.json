@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "chalk": "^2.4.2",
-    "toml": "^3.0.0",
-    "lol": "github:wk-js/lol.js#0.0.7"
+    "lol": "github:wk-js/lol.js#0.0.9",
+    "toml": "^3.0.0"
   },
   "devDependencies": {
-    "@types/mocha": "^5.2.7",
+    "@types/mocha": "5.2.7",
     "@types/node": "9.4.0",
-    "mocha": "^6.1.4",
+    "mocha": "6.2.1",
     "typescript": "3.4.3"
   }
 }

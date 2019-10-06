@@ -2,14 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class Task {
     constructor(_cmd) {
-        this._name = "task";
         this._cwd = process.cwd();
+        this._name = "task";
         this._args = [];
+        this._source = "";
         this._depends = [];
         this._binPath = "";
         this._visible = true;
+        this._concurrent = false;
         this._description = "";
-        this._source = "";
         const args = _cmd.split(/\s/);
         this._cmd = args.shift();
         this._args.push(...args);
@@ -24,10 +25,13 @@ class Task {
     copy(command) {
         this._cmd = command._cmd;
         this._cwd = command._cwd;
+        this._name = command._name;
         this._args = command._args.slice(0);
+        this._source = command._source;
         this._depends = command._depends.slice(0);
         this._binPath = command._binPath;
         this._visible = command._visible;
+        this._concurrent = command._concurrent;
         this._description = command._description;
         return this;
     }
@@ -55,6 +59,10 @@ class Task {
         this._visible = _visible;
         return this;
     }
+    concurrent(_concurrent) {
+        this._concurrent = _concurrent;
+        return this;
+    }
     arg(arg) {
         const args = arg.split(/\s/);
         this._args.push(...args);
@@ -80,6 +88,7 @@ class Task {
             binPath: this._binPath,
             description: this._description,
             visible: this._visible,
+            concurrent: this._concurrent,
             args: this._args.slice(0),
             dependencies: this._depends.slice(0),
         };

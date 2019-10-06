@@ -1,4 +1,5 @@
 export declare type CommandRecord = Record<string, Command>;
+export declare type ConcurrentRecord = Record<string, string[]>;
 export declare type CommandAlias = Record<string, string | Command>;
 export interface CommandCondition {
     platform?: string;
@@ -18,12 +19,26 @@ export interface Command {
     dependsOn?: string[];
     conditions?: CommandCondition[];
 }
-export interface Config {
+export interface ConfigFile {
+    commands: CommandRecord;
+    concurrents: ConcurrentRecord;
     importGlobals?: boolean;
     imports?: string[];
-    commands: CommandRecord;
     aliases?: CommandAlias;
 }
-export declare function load(path: string, importGlobal?: boolean): Promise<Record<string, Command>>;
-export declare function load_directory(path: string, importGlobal?: boolean): Promise<Record<string, Command>>;
-export declare function lookup(importGlobal?: boolean): Promise<CommandRecord>;
+export interface Config {
+    commands: CommandRecord;
+    concurrents: ConcurrentRecord;
+}
+export declare function load(path: string, importGlobals?: boolean): Promise<{
+    commands: Record<string, Command>;
+    concurrents: Record<string, string[]>;
+}>;
+export declare function load_directory(path: string, importGlobals?: boolean): Promise<{
+    commands: Record<string, Command>;
+    concurrents: Record<string, string[]>;
+}>;
+export declare function lookup(importGlobals?: boolean): Promise<{
+    commands: Record<string, Command>;
+    concurrents: Record<string, string[]>;
+}>;

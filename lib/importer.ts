@@ -6,6 +6,7 @@ import TOML from "toml";
 import * as Os from 'os';
 
 export type CommandRecord = Record<string, Command>
+export type ConcurrentRecord = Record<string, string[]>
 export type CommandAlias = Record<string, string|Command>
 
 export interface CommandCondition {
@@ -28,28 +29,38 @@ export interface Command {
   conditions?: CommandCondition[]
 }
 
-export interface Config {
+export interface ConfigFile {
+  commands: CommandRecord
+  concurrents: ConcurrentRecord
   importGlobals?: boolean
   imports?: string[]
-  commands: CommandRecord
   aliases?: CommandAlias
 }
 
-export async function load(path: string, importGlobal = true) {
-  let commands: CommandRecord = {}
+export interface Config {
+  commands: CommandRecord
+  concurrents: ConcurrentRecord
+}
+
+export async function load(path: string, importGlobals = false) {
+  let cmds: CommandRecord = {}
+  let cnts: ConcurrentRecord = {}
 
   const files = fetch(path)
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    commands = merge(commands, await _load(file, importGlobal))
+    const { commands, concurrents } = await _load(file, importGlobals)
+    cmds = merge(cmds, commands)
+    cnts = merge(cnts, concurrents)
   }
 
-  return commands
+  return { commands: cmds, concurrents: cnts }
 }
 
-export async function load_directory(path: string, importGlobal = true) {
-  let commands: CommandRecord = {}
+export async function load_directory(path: string, importGlobals = false) {
+  let cmds: CommandRecord = {}
+  let cnts: ConcurrentRecord = {}
 
   const files = fetch([
     Path.join(path, '**/*.toml'),
@@ -58,13 +69,15 @@ export async function load_directory(path: string, importGlobal = true) {
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    commands = merge(commands, await load(file, importGlobal))
+    const { commands, concurrents } = await _load(file, importGlobals)
+    cmds = merge(cmds, commands)
+    cnts = merge(cnts, concurrents)
   }
 
-  return commands
+  return { commands: cmds, concurrents: cnts }
 }
 
-export function lookup(importGlobal = true): Promise<CommandRecord> {
+export function lookup(importGlobals = false) {
   const paths = [
     Path.join(process.cwd(), 'Commands.toml'),
     Path.join(process.cwd(), 'commands.toml'),
@@ -72,14 +85,14 @@ export function lookup(importGlobal = true): Promise<CommandRecord> {
   ]
 
   for (const p of paths) {
-    if (isFile(p)) return load(p, importGlobal)
+    if (isFile(p)) return load(p, importGlobals)
   }
 
   throw new Error('No commands found.')
 }
 
-async function _load(path: string, importGlobals = true): Promise<CommandRecord> {
-  let config: Config = { commands: {} }
+async function _load(path: string, importGlobals = false) {
+  let config: ConfigFile = { commands: {}, concurrents: {} }
   if (!isFile(path)) {
     throw new Error(`"${path}" is not a file`)
   }
@@ -96,7 +109,7 @@ async function _load(path: string, importGlobals = true): Promise<CommandRecord>
     throw new Error(`Cannot parse "${path}"`)
   }
 
-  importGlobals = typeof config.importGlobals == 'boolean' ? config.importGlobals && importGlobals : importGlobals
+  importGlobals = typeof config.importGlobals == 'boolean' ? config.importGlobals && importGlobals : false
 
   // Auto import global tasks
   if (importGlobals) {
@@ -177,5 +190,8 @@ async function _load(path: string, importGlobals = true): Promise<CommandRecord>
     }
   }
 
-  return config.commands
+  const commands = config.commands
+  const concurrents = config.concurrents
+
+  return { commands, concurrents }
 }

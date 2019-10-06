@@ -16,7 +16,7 @@ export function err(...args: any[]) {
   console.log(chalk.red('[err]'), ...args);
 }
 
-export function list(args: any[]) {
+export function list(args: any[], type = 'default') {
   let length = 0
   let gap = 3
 
@@ -39,7 +39,12 @@ export function list(args: any[]) {
 
     if (Array.isArray(arg)) {
       str += pad(arg[0], length, ' ', true)
-      str += chalk.grey(arg[1])
+
+      if (type == 'default') {
+        str += chalk.grey(arg[1])
+      } else if (type == 'success') {
+        str += arg[1] ? chalk.green('Success') : chalk.red('Failed')
+      }
     } else {
       str += arg
     }

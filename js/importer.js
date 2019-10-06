@@ -24,34 +24,40 @@ const Path = __importStar(require("path"));
 const Fs = __importStar(require("fs"));
 const toml_1 = __importDefault(require("toml"));
 const Os = __importStar(require("os"));
-function load(path, importGlobal = true) {
+function load(path, importGlobals = false) {
     return __awaiter(this, void 0, void 0, function* () {
-        let commands = {};
+        let cmds = {};
+        let cnts = {};
         const files = fs_1.fetch(path);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            commands = object_1.merge(commands, yield _load(file, importGlobal));
+            const { commands, concurrents } = yield _load(file, importGlobals);
+            cmds = object_1.merge(cmds, commands);
+            cnts = object_1.merge(cnts, concurrents);
         }
-        return commands;
+        return { commands: cmds, concurrents: cnts };
     });
 }
 exports.load = load;
-function load_directory(path, importGlobal = true) {
+function load_directory(path, importGlobals = false) {
     return __awaiter(this, void 0, void 0, function* () {
-        let commands = {};
+        let cmds = {};
+        let cnts = {};
         const files = fs_1.fetch([
             Path.join(path, '**/*.toml'),
             Path.join(path, '**/*.json')
         ]);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            commands = object_1.merge(commands, yield load(file, importGlobal));
+            const { commands, concurrents } = yield _load(file, importGlobals);
+            cmds = object_1.merge(cmds, commands);
+            cnts = object_1.merge(cnts, concurrents);
         }
-        return commands;
+        return { commands: cmds, concurrents: cnts };
     });
 }
 exports.load_directory = load_directory;
-function lookup(importGlobal = true) {
+function lookup(importGlobals = false) {
     const paths = [
         Path.join(process.cwd(), 'Commands.toml'),
         Path.join(process.cwd(), 'commands.toml'),
@@ -59,14 +65,14 @@ function lookup(importGlobal = true) {
     ];
     for (const p of paths) {
         if (fs_1.isFile(p))
-            return load(p, importGlobal);
+            return load(p, importGlobals);
     }
     throw new Error('No commands found.');
 }
 exports.lookup = lookup;
-function _load(path, importGlobals = true) {
+function _load(path, importGlobals = false) {
     return __awaiter(this, void 0, void 0, function* () {
-        let config = { commands: {} };
+        let config = { commands: {}, concurrents: {} };
         if (!fs_1.isFile(path)) {
             throw new Error(`"${path}" is not a file`);
         }
@@ -82,7 +88,7 @@ function _load(path, importGlobals = true) {
         catch (e) {
             throw new Error(`Cannot parse "${path}"`);
         }
-        importGlobals = typeof config.importGlobals == 'boolean' ? config.importGlobals && importGlobals : importGlobals;
+        importGlobals = typeof config.importGlobals == 'boolean' ? config.importGlobals && importGlobals : false;
         // Auto import global tasks
         if (importGlobals) {
             const global_dir = Path.join(Os.homedir(), '.wk');
@@ -145,6 +151,8 @@ function _load(path, importGlobals = true) {
                 config.commands[key] = all;
             }
         }
-        return config.commands;
+        const commands = config.commands;
+        const concurrents = config.concurrents;
+        return { commands, concurrents };
     });
 }

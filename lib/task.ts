@@ -1,14 +1,15 @@
 export class Task {
 
-  private _name: string = "task"
   private _cmd: string
   private _cwd: string = process.cwd()
+  private _name: string = "task"
   private _args: string[] = []
+  private _source: string = ""
   private _depends: string[] = []
   private _binPath: string = ""
   private _visible: boolean = true
+  private _concurrent: boolean = false
   private _description: string = ""
-  private _source: string = ""
 
   constructor(_cmd: string) {
     const args = _cmd.split(/\s/)
@@ -28,10 +29,13 @@ export class Task {
   copy(command: Task) {
     this._cmd = command._cmd
     this._cwd = command._cwd
+    this._name = command._name
     this._args = command._args.slice(0)
+    this._source = command._source
     this._depends = command._depends.slice(0)
     this._binPath = command._binPath
     this._visible = command._visible
+    this._concurrent = command._concurrent
     this._description = command._description
     return this
   }
@@ -66,6 +70,11 @@ export class Task {
     return this
   }
 
+  concurrent(_concurrent: boolean) {
+    this._concurrent = _concurrent
+    return this
+  }
+
   arg(arg: string) {
     const args = arg.split(/\s/)
     this._args.push(...args)
@@ -94,6 +103,7 @@ export class Task {
       binPath: this._binPath,
       description: this._description,
       visible: this._visible,
+      concurrent: this._concurrent,
       args: this._args.slice(0),
       dependencies: this._depends.slice(0),
     }
