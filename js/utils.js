@@ -52,9 +52,8 @@ exports.execute = execute;
 function transfert_parameters(task, argv) {
     Object.keys(argv).forEach((key) => {
         if (!key.match(/^wk\./)) {
-            if (!isNaN(parseFloat(key))) {
-                if (argv[key] != argv['0'])
-                    task.arg(argv[key]);
+            if (!isNaN(parseFloat(key)) && typeof argv[key] == 'string') {
+                task.arg(argv[key]);
             }
             else if (key.length == 1 && typeof argv[key] == 'boolean') {
                 task.arg(`-${key}`);

@@ -1,7 +1,14 @@
 import chalk from 'chalk';
 import { pad } from 'lol/js/string'
 
+let _silent = false
+
+export function silent(_muted: boolean = _silent) {
+  return _silent = _muted
+}
+
 export function command(command: string, cwd: string) {
+  if (_silent) return
   console.log(chalk.grey('> From'), cwd);
   console.log(chalk.grey('> Running'), command);
   console.log("");

@@ -1,13 +1,10 @@
-import { create_list, print_tasks, print_help, print_results } from './cli/utils';
+import { create_list, print_tasks, print_help, print_results, isCommand } from './cli/utils';
 import { parse } from "./utils";
 import { Runner } from './runner';
 import * as Log from './log';
 import { load, lookup, Config } from './importer';
 
-const command = process.argv.slice(2)
-const argv = parse(command)
-
-async function main() {
+async function cli(taskName: string, command: string, argv: Record<string, string|boolean>) {
   let config: Config
 
   const importGlobals = typeof argv['wk.global'] == 'boolean' ? argv['wk.global'] as boolean : false
@@ -18,10 +15,10 @@ async function main() {
     config = await lookup(importGlobals)
   }
 
-  const runner = new Runner(create_list(config))
+  const runner = new Runner(create_list(config, argv))
 
-  if (typeof argv['0'] == 'string') {
-    const results = runner.run(command.join(" "))
+  if (typeof taskName == 'string' && taskName.length > 0) {
+    const results = runner.run(command)
     print_results(await results)
     return results
   } else {
@@ -31,13 +28,23 @@ async function main() {
   }
 }
 
-main()
-.catch((e) => {
-  if (argv['wk.verbose']) {
-    Log.err(e)
-  } else {
-    Log.err(e.message)
-  }
-})
+async function main() {
+  const argvs    = process.argv.slice(2)
+  const taskName = isCommand(argvs[0]) ? argvs[0] : ''
+  const parsed   = parse(argvs.slice(taskName.length > 0 ? 1 : 0))
 
+  Log.silent(parsed['wk.verbose.0'] as boolean)
+
+  try {
+    await cli(taskName, argvs.join(' '), parsed)
+  } catch(e) {
+    if (parsed['wk.verbose']) {
+      Log.err(e)
+    } else {
+      Log.err(e.message)
+    }
+  }
+}
+
+main()
 process.on('SIGINT', () => {})

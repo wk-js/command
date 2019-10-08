@@ -2,8 +2,13 @@ import { TaskList } from '../task-list';
 import * as Log from '../log';
 import { Config } from '../importer';
 import { RunnerResult } from '../runner';
+import { merge, clone } from 'lol/js/object';
 
-export function create_list(config: Config) {
+export function isCommand(s?: string) {
+  return s && !s.match(/^-{1,2}/)
+}
+
+export function create_list(config: Config, argv: Record<string, string|boolean>) {
   const list = TaskList.create()
 
   Object.keys(config.commands).forEach((name) => {
@@ -17,6 +22,7 @@ export function create_list(config: Config) {
     if (typeof command.visible == 'boolean') c.visible(command.visible)
     if (command.dependsOn) c.dependsOn(...command.dependsOn)
     if (command.description) c.description(command.description)
+    if (command.variables) c.variables(merge(command.variables, argv))
   })
 
   Object.keys(config.concurrents).forEach((name) => {
@@ -26,6 +32,7 @@ export function create_list(config: Config) {
     c.name(name)
     c.concurrent(true)
     c.dependsOn(...command)
+    c.variables(clone(argv))
   })
 
   return list
@@ -55,6 +62,7 @@ export function print_help() {
 }
 
 export function print_results(results: RunnerResult[]) {
+  if (Log.silent()) return
   process.stdout.write('\n')
   Log.list(results.map(r => {
     return [ r.taskName, r.success ]

@@ -63,8 +63,8 @@ export function execute(command: string, args?: string[], options?: SpawnOptions
 export function transfert_parameters(task: Task, argv: Record<string, string | boolean>) {
   Object.keys(argv).forEach((key) => {
     if (!key.match(/^wk\./)) {
-      if (!isNaN(parseFloat(key))) {
-        if (argv[key] != argv['0']) task.arg(argv[key] as string)
+      if (!isNaN(parseFloat(key)) && typeof argv[key] == 'string') {
+        task.arg(argv[key] as string)
       } else if (key.length == 1 && typeof argv[key] == 'boolean') {
         task.arg(`-${key}`)
       } else if (typeof argv[key] == 'boolean') {

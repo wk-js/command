@@ -9,7 +9,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const task_list_1 = require("../task-list");
 const Log = __importStar(require("../log"));
-function create_list(config) {
+const object_1 = require("lol/js/object");
+function isCommand(s) {
+    return s && !s.match(/^-{1,2}/);
+}
+exports.isCommand = isCommand;
+function create_list(config, argv) {
     const list = task_list_1.TaskList.create();
     Object.keys(config.commands).forEach((name) => {
         const command = config.commands[name];
@@ -29,6 +34,8 @@ function create_list(config) {
             c.dependsOn(...command.dependsOn);
         if (command.description)
             c.description(command.description);
+        if (command.variables)
+            c.variables(object_1.merge(command.variables, argv));
     });
     Object.keys(config.concurrents).forEach((name) => {
         const command = config.concurrents[name];
@@ -36,6 +43,7 @@ function create_list(config) {
         c.name(name);
         c.concurrent(true);
         c.dependsOn(...command);
+        c.variables(object_1.clone(argv));
     });
     return list;
 }
@@ -65,6 +73,8 @@ function print_help() {
 }
 exports.print_help = print_help;
 function print_results(results) {
+    if (Log.silent())
+        return;
     process.stdout.write('\n');
     Log.list(results.map(r => {
         return [r.taskName, r.success];

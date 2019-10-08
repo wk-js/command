@@ -1,3 +1,6 @@
+import { clone } from "lol/js/object"
+import { template2 } from "lol/js/string/template"
+
 export class Task {
 
   private _cmd: string
@@ -5,11 +8,12 @@ export class Task {
   private _name: string = "task"
   private _args: string[] = []
   private _source: string = ""
-  private _depends: string[] = []
   private _binPath: string = ""
   private _visible: boolean = true
   private _concurrent: boolean = false
   private _description: string = ""
+  private _dependencies: string[] = []
+  private _variables: Record<string, string> = {}
 
   constructor(_cmd: string) {
     const args = _cmd.split(/\s/)
@@ -32,11 +36,12 @@ export class Task {
     this._name = command._name
     this._args = command._args.slice(0)
     this._source = command._source
-    this._depends = command._depends.slice(0)
+    this._dependencies = command._dependencies.slice(0)
     this._binPath = command._binPath
     this._visible = command._visible
     this._concurrent = command._concurrent
     this._description = command._description
+    this._variables = clone(command._variables)
     return this
   }
 
@@ -90,22 +95,28 @@ export class Task {
   }
 
   dependsOn(...tasks: string[]) {
-    this._depends.push(...tasks)
+    this._dependencies.push(...tasks)
+    return this
+  }
+
+  variables(variables: Record<string, string>) {
+    this._variables = variables
     return this
   }
 
   toLiteral() {
     return {
-      name: this._name,
-      cwd: this._cwd,
-      cmd: this._cmd,
+      name: template2(this._name, this._variables),
+      cwd: template2(this._cwd, this._variables),
+      cmd: template2(this._cmd, this._variables),
       source: this._source,
-      binPath: this._binPath,
-      description: this._description,
+      binPath: template2(this._binPath, this._variables),
+      description: template2(this._description, this._variables),
       visible: this._visible,
       concurrent: this._concurrent,
-      args: this._args.slice(0),
-      dependencies: this._depends.slice(0),
+      args: this._args.slice(0).map((item) => template2(item, this._variables)),
+      dependencies: this._dependencies.slice(0).map((item) => template2(item, this._variables)),
+      template: clone(this._variables)
     }
   }
 

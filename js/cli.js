@@ -20,9 +20,7 @@ const utils_2 = require("./utils");
 const runner_1 = require("./runner");
 const Log = __importStar(require("./log"));
 const importer_1 = require("./importer");
-const command = process.argv.slice(2);
-const argv = utils_2.parse(command);
-function main() {
+function cli(taskName, command, argv) {
     return __awaiter(this, void 0, void 0, function* () {
         let config;
         const importGlobals = typeof argv['wk.global'] == 'boolean' ? argv['wk.global'] : false;
@@ -32,9 +30,9 @@ function main() {
         else {
             config = yield importer_1.lookup(importGlobals);
         }
-        const runner = new runner_1.Runner(utils_1.create_list(config));
-        if (typeof argv['0'] == 'string') {
-            const results = runner.run(command.join(" "));
+        const runner = new runner_1.Runner(utils_1.create_list(config, argv));
+        if (typeof taskName == 'string' && taskName.length > 0) {
+            const results = runner.run(command);
             utils_1.print_results(yield results);
             return results;
         }
@@ -45,13 +43,24 @@ function main() {
         }
     });
 }
-main()
-    .catch((e) => {
-    if (argv['wk.verbose']) {
-        Log.err(e);
-    }
-    else {
-        Log.err(e.message);
-    }
-});
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const argvs = process.argv.slice(2);
+        const taskName = utils_1.isCommand(argvs[0]) ? argvs[0] : '';
+        const parsed = utils_2.parse(argvs.slice(taskName.length > 0 ? 1 : 0));
+        Log.silent(parsed['wk.verbose.0']);
+        try {
+            yield cli(taskName, argvs.join(' '), parsed);
+        }
+        catch (e) {
+            if (parsed['wk.verbose']) {
+                Log.err(e);
+            }
+            else {
+                Log.err(e.message);
+            }
+        }
+    });
+}
+main();
 process.on('SIGINT', () => { });

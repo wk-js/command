@@ -13,7 +13,6 @@ export interface CommandCondition {
   platform?: string
   arch?: string,
   override?: Command
-  exec?: string
 }
 
 export interface Command {
@@ -27,6 +26,7 @@ export interface Command {
   args?: string[]
   dependsOn?: string[]
   conditions?: CommandCondition[]
+  variables?: Record<string, string>
 }
 
 export interface ConfigFile {

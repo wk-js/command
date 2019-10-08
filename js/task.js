@@ -1,16 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const object_1 = require("lol/js/object");
+const template_1 = require("lol/js/string/template");
 class Task {
     constructor(_cmd) {
         this._cwd = process.cwd();
         this._name = "task";
         this._args = [];
         this._source = "";
-        this._depends = [];
         this._binPath = "";
         this._visible = true;
         this._concurrent = false;
         this._description = "";
+        this._dependencies = [];
+        this._variables = {};
         const args = _cmd.split(/\s/);
         this._cmd = args.shift();
         this._args.push(...args);
@@ -28,11 +31,12 @@ class Task {
         this._name = command._name;
         this._args = command._args.slice(0);
         this._source = command._source;
-        this._depends = command._depends.slice(0);
+        this._dependencies = command._dependencies.slice(0);
         this._binPath = command._binPath;
         this._visible = command._visible;
         this._concurrent = command._concurrent;
         this._description = command._description;
+        this._variables = object_1.clone(command._variables);
         return this;
     }
     name(_name) {
@@ -76,21 +80,26 @@ class Task {
         return this;
     }
     dependsOn(...tasks) {
-        this._depends.push(...tasks);
+        this._dependencies.push(...tasks);
+        return this;
+    }
+    variables(variables) {
+        this._variables = variables;
         return this;
     }
     toLiteral() {
         return {
-            name: this._name,
-            cwd: this._cwd,
-            cmd: this._cmd,
+            name: template_1.template2(this._name, this._variables),
+            cwd: template_1.template2(this._cwd, this._variables),
+            cmd: template_1.template2(this._cmd, this._variables),
             source: this._source,
-            binPath: this._binPath,
-            description: this._description,
+            binPath: template_1.template2(this._binPath, this._variables),
+            description: template_1.template2(this._description, this._variables),
             visible: this._visible,
             concurrent: this._concurrent,
-            args: this._args.slice(0),
-            dependencies: this._depends.slice(0),
+            args: this._args.slice(0).map((item) => template_1.template2(item, this._variables)),
+            dependencies: this._dependencies.slice(0).map((item) => template_1.template2(item, this._variables)),
+            template: object_1.clone(this._variables)
         };
     }
 }

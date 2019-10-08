@@ -5,7 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const chalk_1 = __importDefault(require("chalk"));
 const string_1 = require("lol/js/string");
+let _silent = false;
+function silent(_muted = _silent) {
+    return _silent = _muted;
+}
+exports.silent = silent;
 function command(command, cwd) {
+    if (_silent)
+        return;
     console.log(chalk_1.default.grey('> From'), cwd);
     console.log(chalk_1.default.grey('> Running'), command);
     console.log("");

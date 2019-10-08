@@ -8,5 +8,6 @@ command = "mocha -r ts-node/register ./test/**/*.spec.ts"
 binPath = "./node_modules/.bin"
 description = "Run tests"
 
-[concurrents]
-test = [ "tsc --watch", "mocha" ]
+[commands.hello]
+command = "echo 'Hello ${name}!'"
+variables = { name = "John" }
