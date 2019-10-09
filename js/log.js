@@ -15,8 +15,7 @@ function command(command, cwd) {
         return;
     console.log(chalk_1.default.grey('> From'), cwd);
     console.log(chalk_1.default.grey('> Running'), command);
-    console.log("");
-    console.log("");
+    process.stdout.write('\n');
 }
 exports.command = command;
 function warn(...args) {

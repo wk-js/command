@@ -11,8 +11,7 @@ export function command(command: string, cwd: string) {
   if (_silent) return
   console.log(chalk.grey('> From'), cwd);
   console.log(chalk.grey('> Running'), command);
-  console.log("");
-  console.log("");
+  process.stdout.write('\n')
 }
 
 export function warn(...args: any[]) {

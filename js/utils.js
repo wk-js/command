@@ -29,9 +29,40 @@ function parse(argv) {
             index++;
         }
     }
+    Object.defineProperty(parameters, '___argv', {
+        enumerable: false,
+        writable: false,
+        configurable: false,
+        value: argv.join(' ')
+    });
     return parameters;
 }
 exports.parse = parse;
+function filter(argv, regex, omit = false) {
+    const argv_arr = [];
+    const parameters = {};
+    Object.keys(argv)
+        .forEach(key => {
+        if ((omit && !key.match(regex)) || (!omit && key.match(regex))) {
+            const new_key = key.replace(regex, '');
+            parameters[new_key] = argv[key];
+            if (isNaN(parseInt(key))) {
+                argv_arr.push(`--${new_key}=${argv[key]}`);
+            }
+            else {
+                argv_arr.push(argv[key]);
+            }
+        }
+    });
+    Object.defineProperty(parameters, '___argv', {
+        enumerable: false,
+        writable: false,
+        configurable: false,
+        value: argv_arr.join(' ')
+    });
+    return parameters;
+}
+exports.filter = filter;
 function execute(command, args, options) {
     const stdout = new memory_stream_1.MemoryStream(Date.now() + '' + Math.random());
     const stderr = new memory_stream_1.MemoryStream(Date.now() + '' + Math.random());

@@ -2,14 +2,11 @@ import { SpawnOptions, spawn, ChildProcess } from "child_process";
 import { MemoryStream } from 'lol/js/node/memory-stream';
 import { Task } from "./task";
 
-export interface Parameters {
-  a: string[],
-  o: Record<string, string|boolean>
-}
+export type ARGv = Record<string, string|boolean>
 
 export function parse(argv: string[]) {
 
-  const parameters: Record<string, string|boolean> = {}
+  const parameters: ARGv = {}
 
   let key = ''
   let keyRegex = /^-{1,2}/
@@ -38,8 +35,43 @@ export function parse(argv: string[]) {
     }
   }
 
+  Object.defineProperty(parameters, '___argv', {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: argv.join(' ')
+  })
+
   return parameters
 
+}
+
+export function filter(argv: ARGv, regex: RegExp, omit = false) {
+  const argv_arr: string[] = []
+  const parameters: ARGv = {}
+
+  Object.keys(argv)
+  .forEach(key => {
+    if ((omit && !key.match(regex)) || (!omit && key.match(regex))) {
+      const new_key = key.replace(regex, '')
+      parameters[new_key] = argv[key]
+
+      if (isNaN(parseInt(key))) {
+        argv_arr.push(`--${new_key}=${argv[key]}`)
+      } else {
+        argv_arr.push(argv[key] as string)
+      }
+    }
+  })
+
+  Object.defineProperty(parameters, '___argv', {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: argv_arr.join(' ')
+  })
+
+  return parameters
 }
 
 export function execute(command: string, args?: string[], options?: SpawnOptions) {

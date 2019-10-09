@@ -86,7 +86,7 @@ variables = { name = "John" }
 ```sh
 wk hello
 > Hello John!
-wk hello --name Mark
+wk hello --var.name Mark
 > Hello Mark!
 ```
 
@@ -102,7 +102,7 @@ start = [ "welcome", "echo 'Hello ${name}!'" ]
 ```
 
 ```sh
-wk start --name John
+wk start --var.name John
 > Welcome
 > Hello John!
 ```

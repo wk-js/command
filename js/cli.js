@@ -20,40 +20,41 @@ const utils_2 = require("./utils");
 const runner_1 = require("./runner");
 const Log = __importStar(require("./log"));
 const importer_1 = require("./importer");
-function cli(taskName, command, argv) {
+function cli({ task, wk, vars }) {
     return __awaiter(this, void 0, void 0, function* () {
         let config;
-        const importGlobals = typeof argv['wk.global'] == 'boolean' ? argv['wk.global'] : false;
-        if (argv['wk.commands']) {
-            config = yield importer_1.load(argv['wk.commands'], importGlobals);
+        const importGlobals = typeof wk.global == 'boolean' ? wk.global : false;
+        if (wk.commands) {
+            config = yield importer_1.load(wk.commands, importGlobals);
         }
         else {
             config = yield importer_1.lookup(importGlobals);
         }
-        const runner = new runner_1.Runner(utils_1.create_list(config, argv));
-        if (typeof taskName == 'string' && taskName.length > 0) {
-            const results = runner.run(command);
+        const runner = new runner_1.Runner(utils_1.create_list(config, vars));
+        if (typeof task['0'] == 'string') {
+            const results = runner.run(task['___argv']);
             utils_1.print_results(yield results);
             return results;
         }
         else {
             utils_1.print_help();
             process.stdout.write('\n');
-            utils_1.print_tasks(runner.tasks, argv['wk.verbose']);
+            utils_1.print_tasks(runner.tasks, wk.verbose);
         }
     });
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const argvs = process.argv.slice(2);
-        const taskName = utils_1.isCommand(argvs[0]) ? argvs[0] : '';
-        const parsed = utils_2.parse(argvs.slice(taskName.length > 0 ? 1 : 0));
-        Log.silent(parsed['wk.verbose.0']);
+        const parsed = utils_2.parse(process.argv.slice(2));
+        const wk = utils_2.filter(parsed, /wk\./);
+        const task = utils_2.filter(parsed, /(wk|var)\./, true);
+        const vars = utils_2.filter(parsed, /var\./);
+        Log.silent(wk.silent);
         try {
-            yield cli(taskName, argvs.join(' '), parsed);
+            yield cli({ wk, task, vars });
         }
         catch (e) {
-            if (parsed['wk.verbose']) {
+            if (wk.verbose) {
                 Log.err(e);
             }
             else {
