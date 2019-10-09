@@ -20,6 +20,7 @@ const Path = __importStar(require("path"));
 const Print = __importStar(require("./utils/print"));
 const utils_1 = require("./utils");
 const argv_1 = require("./utils/argv");
+const cli_1 = require("./utils/cli");
 class Runner {
     constructor(tasks = new task_list_1.TaskList) {
         this.tasks = tasks;
@@ -51,7 +52,9 @@ class Runner {
             let command = this.tasks.find(args.shift());
             if (args.length > 0) {
                 command = command.clone();
-                utils_1.transfert_parameters(command, argv_1.parse(args));
+                const [vars, targv] = cli_1.extract_vars(args);
+                command.args(...targv);
+                command.variables(argv_1.parse(vars));
             }
             if (typeof edit === 'function') {
                 command = command.clone();

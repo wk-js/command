@@ -84,7 +84,7 @@ class Task {
         return this;
     }
     variables(variables) {
-        this._variables = variables;
+        this._variables = object_1.merge(this._variables, variables);
         return this;
     }
     toLiteral() {

@@ -5,4 +5,6 @@ export interface WKOptions {
     log: string | boolean;
     commands?: string;
 }
-export declare function create_list(config: Config, argv: Record<string, string | boolean>): TaskList;
+export declare function create_list(config: Config): TaskList;
+export declare function extract_wks(argv: string[]): [string[], string[]];
+export declare function extract_vars(argv: string[]): [string[], string[]];

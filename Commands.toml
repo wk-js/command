@@ -7,7 +7,3 @@ description = "Compile .ts files"
 command = "mocha -r ts-node/register ./test/**/*.spec.ts"
 binPath = "./node_modules/.bin"
 description = "Run tests"
-
-[commands.hello]
-command = "echo 'Hello ${name}!'"
-variables = { name = "John" }

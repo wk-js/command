@@ -161,8 +161,9 @@ async function _load(path: string, importGlobals = false) {
   // Load extended files
   if (config.imports != null) {
     for (const e of config.imports) {
-      // config.commands = merge(load(e), config.commands)
-      config.commands = merge(await load(e, importGlobals), config.commands)
+      const imp = await load(e, importGlobals)
+      config.commands = merge(imp.commands, config.commands)
+      config.concurrents = merge(imp.concurrents, config.concurrents)
     }
   }
 

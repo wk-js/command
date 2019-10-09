@@ -16,7 +16,7 @@ description = "Display a welcome message" # Add a task description
 
 [commands.age]
 command = "echo"
-args = [ "How old are you?" ] # Pass command arguments
+args = [ "How", "old", "are", "you?" ] # Pass command arguments
 
 [commands.your_age]
 command = "echo 'I am ${age}.'"
@@ -76,6 +76,16 @@ wk node --version
 ```
 
 ## Variables
+
+Can be used on following fields:
+* name
+* command
+* cwd
+* cmd
+* binPath
+* description
+* args
+* dependsOn
 
 ```toml
 [commands.hello]

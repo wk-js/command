@@ -1,4 +1,4 @@
-import { clone } from "lol/js/object"
+import { clone, merge } from "lol/js/object"
 import { template2 } from "lol/js/string/template"
 
 export class Task {
@@ -100,7 +100,7 @@ export class Task {
   }
 
   variables(variables: Record<string, string>) {
-    this._variables = variables
+    this._variables = merge(this._variables, variables)
     return this
   }
 

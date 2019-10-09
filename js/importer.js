@@ -128,8 +128,9 @@ function _load(path, importGlobals = false) {
         // Load extended files
         if (config.imports != null) {
             for (const e of config.imports) {
-                // config.commands = merge(load(e), config.commands)
-                config.commands = object_1.merge(yield load(e, importGlobals), config.commands);
+                const imp = yield load(e, importGlobals);
+                config.commands = object_1.merge(imp.commands, config.commands);
+                config.concurrents = object_1.merge(imp.concurrents, config.concurrents);
             }
         }
         // Resolve aliases

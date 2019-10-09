@@ -1,11 +1,11 @@
-import { create_list, WKOptions } from './utils/cli'
+import { create_list, WKOptions, extract_wks } from './utils/cli'
 import { parse, filter, ARGv } from "./utils/argv"
 import { Runner } from './runner'
 import * as Log from './log'
 import * as Print from './utils/print'
 import { load, lookup, Config } from './importer'
 
-async function cli({ task, wk, vars }: { task: ARGv, wk: WKOptions, vars: ARGv }) {
+async function cli({ task, wk }: { task: ARGv, wk: WKOptions }) {
   let config: Config
 
   const importGlobals = typeof wk.global == 'boolean' ? wk.global : false
@@ -16,7 +16,7 @@ async function cli({ task, wk, vars }: { task: ARGv, wk: WKOptions, vars: ARGv }
     config = await lookup(importGlobals)
   }
 
-  const runner = new Runner(create_list(config, vars))
+  const runner = new Runner(create_list(config))
 
   if (typeof task['0'] == 'string') {
     const results = runner.run(task['___argv'] as string)
@@ -28,10 +28,10 @@ async function cli({ task, wk, vars }: { task: ARGv, wk: WKOptions, vars: ARGv }
 }
 
 async function main() {
-  const parsed = parse(process.argv.slice(2))
-  const wk   = filter(parsed, /wk\./) as unknown as WKOptions
-  const task = filter(parsed, /(wk|var)\./, true)
-  const vars = filter(parsed, /var\./)
+  const [ wks, argv ] = extract_wks(process.argv.slice(2))
+
+  const wk = parse(wks) as unknown as WKOptions
+  const task = parse(argv)
 
   if (typeof wk.log === 'boolean') {
     Log.level(Log.Level.FULL)
@@ -40,7 +40,7 @@ async function main() {
   }
 
   try {
-    await cli({ wk, task, vars })
+    await cli({ wk, task })
   } catch(e) {
     Print.err(e)
   }

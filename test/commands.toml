@@ -1,11 +1,14 @@
 [commands]
-pwd = "pwd"
+test = "echo Test something"
 
-[commands.list]
-command = "ls -la"
-cwd = "./tests"
-description = "List file structure"
+# [commands]
+# pwd = "pwd"
 
-[commands.tsc]
-command = "tsc"
-binPath = "./node_modules/.bin"
+# [commands.list]
+# command = "ls -la"
+# cwd = "./tests"
+# description = "List file structure"
+
+# [commands.tsc]
+# command = "tsc"
+# binPath = "./node_modules/.bin"

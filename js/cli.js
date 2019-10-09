@@ -21,7 +21,7 @@ const runner_1 = require("./runner");
 const Log = __importStar(require("./log"));
 const Print = __importStar(require("./utils/print"));
 const importer_1 = require("./importer");
-function cli({ task, wk, vars }) {
+function cli({ task, wk }) {
     return __awaiter(this, void 0, void 0, function* () {
         let config;
         const importGlobals = typeof wk.global == 'boolean' ? wk.global : false;
@@ -31,7 +31,7 @@ function cli({ task, wk, vars }) {
         else {
             config = yield importer_1.lookup(importGlobals);
         }
-        const runner = new runner_1.Runner(cli_1.create_list(config, vars));
+        const runner = new runner_1.Runner(cli_1.create_list(config));
         if (typeof task['0'] == 'string') {
             const results = runner.run(task['___argv']);
             Print.results(yield results);
@@ -44,10 +44,9 @@ function cli({ task, wk, vars }) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const parsed = argv_1.parse(process.argv.slice(2));
-        const wk = argv_1.filter(parsed, /wk\./);
-        const task = argv_1.filter(parsed, /(wk|var)\./, true);
-        const vars = argv_1.filter(parsed, /var\./);
+        const [wks, argv] = cli_1.extract_wks(process.argv.slice(2));
+        const wk = argv_1.parse(wks);
+        const task = argv_1.parse(argv);
         if (typeof wk.log === 'boolean') {
             Log.level(2 /* FULL */);
         }
@@ -55,7 +54,7 @@ function main() {
             Log.level(parseInt(wk.log));
         }
         try {
-            yield cli({ wk, task, vars });
+            yield cli({ wk, task });
         }
         catch (e) {
             Print.err(e);

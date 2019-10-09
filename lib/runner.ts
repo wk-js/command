@@ -4,6 +4,7 @@ import * as Path from 'path';
 import * as Print from './utils/print';
 import { execute, transfert_parameters } from './utils';
 import { parse } from './utils/argv';
+import { extract_vars } from "./utils/cli";
 
 export interface RunnerResult {
   success: boolean,
@@ -44,7 +45,10 @@ export class Runner {
 
     if (args.length > 0) {
       command = command.clone()
-      transfert_parameters(command, parse(args))
+
+      const [ vars, targv ] = extract_vars(args)
+      command.args(...targv)
+      command.variables(parse(vars) as Record<string, string>)
     }
 
     if (typeof edit === 'function') {

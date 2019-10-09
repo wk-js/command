@@ -3,21 +3,29 @@ import { MemoryStream } from 'lol/js/node/memory-stream';
 import { Task } from "../task";
 
 export function execute(command: string, args?: string[], options?: SpawnOptions) {
-  const stdout = new MemoryStream(Date.now()+''+Math.random())
-  const stderr = new MemoryStream(Date.now()+''+Math.random())
-  const promise = new Promise<[number, string, ChildProcess]>((resolve, reject) => {
-    const cprocess = spawn(command, args, options)
-    if (options && options.stdio === 'pipe') {
-      cprocess.stdout.pipe(stdout)
-      cprocess.stderr.pipe(stderr)
-    }
-    cprocess.on('error', reject)
-    cprocess.on('exit', (code, signal) => {
-      resolve([code, signal, cprocess])
-    })
-  })
+  let stdout: MemoryStream | undefined
+  let stderr: MemoryStream | undefined
 
-  return { stdout, stderr, promise }
+  if (options && options.stdio === 'pipe') {
+    stdout = new MemoryStream()
+    stderr = new MemoryStream()
+  }
+
+  return {
+    stdout,
+    stderr,
+    promise: new Promise<[number, string, ChildProcess]>((resolve, reject) => {
+      const child = spawn(command, args, options)
+      if (options && options.stdio === 'pipe') {
+        child.stdout.pipe(stdout as MemoryStream)
+        child.stderr.pipe(stderr as MemoryStream)
+      }
+      child.on('error', reject)
+      child.on('exit', (code, signal) => {
+        resolve([code, signal, child])
+      })
+    })
+  }
 }
 
 export function transfert_parameters(task: Task, argv: Record<string, string | boolean>) {
