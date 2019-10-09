@@ -15,10 +15,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("./cli/utils");
-const utils_2 = require("./utils");
+const cli_1 = require("./utils/cli");
+const argv_1 = require("./utils/argv");
 const runner_1 = require("./runner");
 const Log = __importStar(require("./log"));
+const Print = __importStar(require("./utils/print"));
 const importer_1 = require("./importer");
 function cli({ task, wk, vars }) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -30,36 +31,34 @@ function cli({ task, wk, vars }) {
         else {
             config = yield importer_1.lookup(importGlobals);
         }
-        const runner = new runner_1.Runner(utils_1.create_list(config, vars));
+        const runner = new runner_1.Runner(cli_1.create_list(config, vars));
         if (typeof task['0'] == 'string') {
             const results = runner.run(task['___argv']);
-            utils_1.print_results(yield results);
+            Print.results(yield results);
             return results;
         }
         else {
-            utils_1.print_help();
-            process.stdout.write('\n');
-            utils_1.print_tasks(runner.tasks, wk.verbose);
+            Print.helpAndTasks(runner.tasks);
         }
     });
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        const parsed = utils_2.parse(process.argv.slice(2));
-        const wk = utils_2.filter(parsed, /wk\./);
-        const task = utils_2.filter(parsed, /(wk|var)\./, true);
-        const vars = utils_2.filter(parsed, /var\./);
-        Log.silent(wk.silent);
+        const parsed = argv_1.parse(process.argv.slice(2));
+        const wk = argv_1.filter(parsed, /wk\./);
+        const task = argv_1.filter(parsed, /(wk|var)\./, true);
+        const vars = argv_1.filter(parsed, /var\./);
+        if (typeof wk.log === 'boolean') {
+            Log.level(2 /* FULL */);
+        }
+        else if (!isNaN(parseInt(wk.log))) {
+            Log.level(parseInt(wk.log));
+        }
         try {
             yield cli({ wk, task, vars });
         }
         catch (e) {
-            if (wk.verbose) {
-                Log.err(e);
-            }
-            else {
-                Log.err(e.message);
-            }
+            Print.err(e);
         }
     });
 }

@@ -1,11 +1,11 @@
 import { TaskList } from '../task-list';
-import * as Log from '../log';
 import { Config } from '../importer';
-import { RunnerResult } from '../runner';
 import { merge, clone } from 'lol/js/object';
 
-export function isCommand(s?: string) {
-  return s && !s.match(/^-{1,2}/)
+export interface WKOptions {
+  global: boolean;
+  log: string | boolean;
+  commands?: string;
 }
 
 export function create_list(config: Config, argv: Record<string, string|boolean>) {
@@ -36,35 +36,4 @@ export function create_list(config: Config, argv: Record<string, string|boolean>
   })
 
   return list
-}
-
-export function print_tasks(list: TaskList, verbose = false) {
-  console.log('Task availables')
-  const tasks: (string | [string, string])[] = list.all()
-    .map(t => t.toLiteral())
-    .filter(t => verbose ? verbose : t.visible)
-    .map(t => {
-      let description = verbose ? `(From "${t.source}")` : ""
-      description = verbose && !t.visible ? `[Hidden]` : ""
-      if (t.description) description = `${t.description} ${description}`
-      return [t.name, description]
-    })
-  Log.list(tasks)
-}
-
-export function print_help() {
-  console.log('Parameters availables')
-  Log.list([
-    ['--wk.commands=[PATH]', 'Set commands file path'],
-    ['--wk.global', 'Import global tasks. Can accept "false" to disable'],
-    ['--wk.verbose', 'Display error stack']
-  ])
-}
-
-export function print_results(results: RunnerResult[]) {
-  if (Log.silent()) return
-  process.stdout.write('\n')
-  Log.list(results.map(r => {
-    return [ r.taskName, r.success ]
-  }), 'success')
 }

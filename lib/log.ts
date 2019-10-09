@@ -1,25 +1,16 @@
 import chalk from 'chalk';
 import { pad } from 'lol/js/string'
 
-let _silent = false
+let _level = Level.SILENT
 
-export function silent(_muted: boolean = _silent) {
-  return _silent = _muted
+export const enum Level {
+  FULL = 2,
+  LIGHT = 1,
+  SILENT = 0
 }
 
-export function command(command: string, cwd: string) {
-  if (_silent) return
-  console.log(chalk.grey('> From'), cwd);
-  console.log(chalk.grey('> Running'), command);
-  process.stdout.write('\n')
-}
-
-export function warn(...args: any[]) {
-  console.log(chalk.yellow('[warn]'), ...args);
-}
-
-export function err(...args: any[]) {
-  console.log(chalk.red('[err]'), ...args);
+export function level(value: Level = _level) {
+  return _level = value
 }
 
 export function list(args: any[], type = 'default') {

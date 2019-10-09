@@ -1,17 +1,11 @@
-import { create_list, print_tasks, print_help, print_results, isCommand } from './cli/utils';
-import { parse, filter, ARGv } from "./utils";
-import { Runner } from './runner';
-import * as Log from './log';
-import { load, lookup, Config } from './importer';
+import { create_list, WKOptions } from './utils/cli'
+import { parse, filter, ARGv } from "./utils/argv"
+import { Runner } from './runner'
+import * as Log from './log'
+import * as Print from './utils/print'
+import { load, lookup, Config } from './importer'
 
-interface WKArgv {
-  global?: boolean;
-  commands?: string;
-  verbose?: boolean;
-  silent?: boolean;
-}
-
-async function cli({ task, wk, vars }: { task: ARGv, wk: WKArgv, vars: ARGv }) {
+async function cli({ task, wk, vars }: { task: ARGv, wk: WKOptions, vars: ARGv }) {
   let config: Config
 
   const importGlobals = typeof wk.global == 'boolean' ? wk.global : false
@@ -26,31 +20,29 @@ async function cli({ task, wk, vars }: { task: ARGv, wk: WKArgv, vars: ARGv }) {
 
   if (typeof task['0'] == 'string') {
     const results = runner.run(task['___argv'] as string)
-    print_results(await results)
+    Print.results(await results)
     return results
   } else {
-    print_help()
-    process.stdout.write('\n')
-    print_tasks(runner.tasks, wk.verbose)
+    Print.helpAndTasks(runner.tasks)
   }
 }
 
 async function main() {
   const parsed = parse(process.argv.slice(2))
-  const wk   = filter(parsed, /wk\./) as unknown as WKArgv
+  const wk   = filter(parsed, /wk\./) as unknown as WKOptions
   const task = filter(parsed, /(wk|var)\./, true)
   const vars = filter(parsed, /var\./)
 
-  Log.silent(wk.silent)
+  if (typeof wk.log === 'boolean') {
+    Log.level(Log.Level.FULL)
+  } else if (!isNaN(parseInt(wk.log))) {
+    Log.level(parseInt(wk.log))
+  }
 
   try {
     await cli({ wk, task, vars })
   } catch(e) {
-    if (wk.verbose) {
-      Log.err(e)
-    } else {
-      Log.err(e.message)
-    }
+    Print.err(e)
   }
 }
 

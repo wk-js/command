@@ -1,8 +1,9 @@
 import { TaskList } from "./task-list";
 import { Task } from "./task";
 import * as Path from 'path';
-import * as Log from './log';
-import { execute, parse, transfert_parameters } from './utils';
+import * as Print from './utils/print';
+import { execute, transfert_parameters } from './utils';
+import { parse } from './utils/argv';
 
 export interface RunnerResult {
   success: boolean,
@@ -71,7 +72,7 @@ export class Runner {
 
     const env = Object.assign({ FORCE_COLOR: true }, process.env)
     const cmd = task.binPath.length > 0 ? Path.join(task.binPath, task.cmd) : task.cmd
-    Log.command(`${cmd} ${task.args.join(' ')}`, task.cwd)
+    Print.command(`${cmd} ${task.args.join(' ')}`, task.cwd)
 
     const [code, signal] = await execute(cmd, task.args, {
       cwd: task.cwd,
