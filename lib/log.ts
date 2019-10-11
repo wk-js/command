@@ -1,11 +1,12 @@
 import chalk from 'chalk';
 import { pad } from 'lol/js/string'
 
-let _level = Level.SILENT
+let _level = Level.OUTPUT
 
 export const enum Level {
-  FULL = 2,
-  LIGHT = 1,
+  FULL = 3,
+  LIGHT = 2,
+  OUTPUT = 1,
   SILENT = 0
 }
 

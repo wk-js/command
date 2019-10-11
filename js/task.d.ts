@@ -20,7 +20,7 @@ export declare class Task {
     description(_description: string): this;
     source(_source: string): this;
     visible(_visible: boolean): this;
-    concurrent(_concurrent: boolean): this;
+    concurrent(_concurrent: string[]): this;
     arg(arg: string): this;
     args(...args: string[]): this;
     dependsOn(...tasks: string[]): this;
@@ -33,7 +33,7 @@ export declare class Task {
         binPath: string;
         description: string;
         visible: boolean;
-        concurrent: boolean;
+        concurrent: string[];
         args: string[];
         dependencies: string[];
         template: {};

@@ -1,6 +1,7 @@
 export declare const enum Level {
-    FULL = 2,
-    LIGHT = 1,
+    FULL = 3,
+    LIGHT = 2,
+    OUTPUT = 1,
     SILENT = 0
 }
 export declare function level(value?: Level): Level;

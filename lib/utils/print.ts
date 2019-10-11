@@ -43,11 +43,12 @@ export function help() {
   Log.list([
     ['--wk.commands=[PATH]', 'Set commands file path'],
     ['--wk.global', 'Import global tasks. Can accept "false" to disable'],
-    ['--wk.log=0|1|2', 'Log level (Default: 0)']
+    ['--wk.log=0|1|2|3', `Log level (Current: ${Log.level()})`]
   ])
 }
 
 export function helpAndTasks(list: TaskList) {
+  if (Log.level() == Log.Level.SILENT) return
   help()
   process.stdout.write('\n')
   tasks(list)

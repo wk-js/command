@@ -2,7 +2,8 @@ import { TaskList } from "./task-list";
 import { Task } from "./task";
 import * as Path from 'path';
 import * as Print from './utils/print';
-import { execute, transfert_parameters } from './utils';
+import * as Log from './log';
+import { execute } from './utils';
 import { parse } from './utils/argv';
 import { extract_vars } from "./utils/cli";
 
@@ -14,6 +15,10 @@ export interface RunnerResult {
 export class Runner {
 
   constructor(public tasks: TaskList = new TaskList) {}
+
+  logLevel(level: Log.Level) {
+    Log.level(level)
+  }
 
   static create(tasks?: TaskList) {
     return new Runner(tasks)
@@ -60,18 +65,15 @@ export class Runner {
 
     let results: RunnerResult[] = []
 
-    if (task.concurrent) {
-      if (task.dependencies.length > 0) {
-        const res0 = await this.parallel(...task.dependencies)
-        results = results.concat(...res0)
-      }
-
-      return results
-    }
-
     if (task.dependencies.length > 0) {
       const res1 = await this.serie(...task.dependencies)
       results = results.concat(...res1)
+    }
+
+    if (task.concurrent.length > 0) {
+      const res0 = await this.parallel(...task.concurrent)
+      results = results.concat(...res0)
+      return results
     }
 
     const env = Object.assign({ FORCE_COLOR: true }, process.env)
@@ -80,10 +82,10 @@ export class Runner {
 
     const [code, signal] = await execute(cmd, task.args, {
       cwd: task.cwd,
-      stdio: "inherit",
+      stdio: Log.level() == Log.Level.SILENT ? "ignore" : "inherit",
       shell: true,
       env
-    }).promise
+    }).promise()
 
     results.push({
       success: code == 0 || signal == 'SIGINT',

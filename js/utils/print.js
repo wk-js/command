@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Log = __importStar(require("../log"));
 const chalk_1 = __importDefault(require("chalk"));
 function command(command, cwd) {
-    if (Log.level() < 1 /* LIGHT */)
+    if (Log.level() < 2 /* LIGHT */)
         return;
     console.log(chalk_1.default.grey('> From'), cwd);
     console.log(chalk_1.default.grey('> Running'), command);
@@ -21,13 +21,13 @@ function command(command, cwd) {
 }
 exports.command = command;
 function warn(...args) {
-    if (Log.level() < 1 /* LIGHT */)
+    if (Log.level() < 2 /* LIGHT */)
         return;
     console.log(chalk_1.default.yellow('[warn]'), ...args);
 }
 exports.warn = warn;
 function err(e) {
-    if (Log.level() == 2 /* FULL */) {
+    if (Log.level() == 3 /* FULL */) {
         console.log(chalk_1.default.red('[err]'), e);
     }
     else {
@@ -36,7 +36,7 @@ function err(e) {
 }
 exports.err = err;
 function tasks(list) {
-    const verbose = Log.level() == 2 /* FULL */;
+    const verbose = Log.level() == 3 /* FULL */;
     console.log('Task availables');
     const tasks = list.all()
         .map(t => t.toLiteral())
@@ -56,18 +56,20 @@ function help() {
     Log.list([
         ['--wk.commands=[PATH]', 'Set commands file path'],
         ['--wk.global', 'Import global tasks. Can accept "false" to disable'],
-        ['--wk.log=0|1|2', 'Log level (Default: 0)']
+        ['--wk.log=0|1|2|3', `Log level (Current: ${Log.level()})`]
     ]);
 }
 exports.help = help;
 function helpAndTasks(list) {
+    if (Log.level() == 0 /* SILENT */)
+        return;
     help();
     process.stdout.write('\n');
     tasks(list);
 }
 exports.helpAndTasks = helpAndTasks;
 function results(results) {
-    if (Log.level() < 2 /* FULL */)
+    if (Log.level() < 3 /* FULL */)
         return;
     process.stdout.write('\n');
     Log.list(results.map(r => {

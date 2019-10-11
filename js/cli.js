@@ -48,7 +48,7 @@ function main() {
         const wk = argv_1.parse(wks);
         const task = argv_1.parse(argv);
         if (typeof wk.log === 'boolean') {
-            Log.level(2 /* FULL */);
+            Log.level(3 /* FULL */);
         }
         else if (!isNaN(parseInt(wk.log))) {
             Log.level(parseInt(wk.log));

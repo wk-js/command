@@ -72,88 +72,107 @@ function lookup(importGlobals = false) {
 exports.lookup = lookup;
 function _load(path, importGlobals = false) {
     return __awaiter(this, void 0, void 0, function* () {
-        let config = { commands: {}, concurrents: {} };
         if (!fs_1.isFile(path)) {
             throw new Error(`"${path}" is not a file`);
         }
+        let file = { commands: {}, concurrents: {} };
+        let config = { commands: {}, concurrents: {} };
         const content = Fs.readFileSync(path, 'utf-8');
         try {
             if (Path.extname(path) == '.toml') {
-                config = toml_1.default.parse(content);
+                file = toml_1.default.parse(content);
             }
             else if (Path.extname(path) == '.json') {
-                config = JSON.parse(content);
+                file = JSON.parse(content);
             }
         }
         catch (e) {
             throw new Error(`Cannot parse "${path}"`);
         }
-        importGlobals = typeof config.importGlobals == 'boolean' ? config.importGlobals && importGlobals : false;
+        importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals && importGlobals : false;
         // Auto import global tasks
         if (importGlobals) {
             const global_dir = Path.join(Os.homedir(), '.wk');
-            config.commands = object_1.merge(yield load(Path.join(global_dir, '**/*.{json,toml}'), false), config.commands);
+            file.commands = object_1.merge(yield load(Path.join(global_dir, '**/*.{json,toml}'), false), file.commands);
         }
-        for (const key in config.commands) {
-            let command = config.commands[key];
-            // Replace string to literal
-            if (typeof command == 'string') {
-                config.commands[key] = { command };
+        // Parse commands
+        for (const key in file.commands) {
+            const command = Parser.commandFromString(file.commands[key]);
+            Parser.source(command, path);
+            if (Array.isArray(command.conditions) && !Parser.conditions(command)) {
+                continue;
             }
-            // Set source file
-            config.commands[key].source = path;
-            // Apply condition
-            if (Array.isArray(config.commands[key].conditions)) {
-                const conditions = config.commands[key].conditions;
-                const platform = Os.platform();
-                const arch = Os.arch();
-                let valid = false;
-                for (let index = 0; index < conditions.length; index++) {
-                    const condition = conditions[index];
-                    if (typeof condition.platform == 'string' && condition.platform != platform) {
-                        continue;
-                    }
-                    if (typeof condition.arch == 'string' && condition.arch != arch) {
-                        continue;
-                    }
-                    valid = true;
-                    if (condition.override != null) {
-                        config.commands[key] = object_1.merge(config.commands[key], condition.override);
-                    }
-                }
-                if (!valid)
-                    delete config.commands[key];
+            config.commands[key] = command;
+        }
+        // Parse concurrents
+        for (const key in file.concurrents) {
+            const concurrent = Parser.concurrentFromStrings(file.concurrents[key]);
+            Parser.source(concurrent, path);
+            if (Array.isArray(concurrent.conditions) && !Parser.conditions(concurrent)) {
+                continue;
             }
+            config.concurrents[key] = concurrent;
         }
         // Load extended files
-        if (config.imports != null) {
-            for (const e of config.imports) {
+        if (file.imports != null) {
+            for (const e of file.imports) {
                 const imp = yield load(e, importGlobals);
                 config.commands = object_1.merge(imp.commands, config.commands);
                 config.concurrents = object_1.merge(imp.concurrents, config.concurrents);
             }
         }
         // Resolve aliases
-        if (config.aliases != null) {
-            for (const key in config.aliases) {
-                let alias = config.aliases[key];
-                if (typeof alias == 'string') {
-                    alias = { command: alias };
-                }
-                let al = alias;
-                const command = config.commands[al.command];
+        if (file.aliases != null) {
+            for (const key in file.aliases) {
+                let alias = Parser.commandFromString(file.aliases[key]);
+                const command = config.commands[alias.command];
                 if (!command) {
-                    throw new Error(`Cannot alias "${key}" with "${al.command}"`);
+                    throw new Error(`Cannot alias "${key}" with "${alias.command}"`);
                 }
-                const all = object_1.merge({}, command, al);
-                all.name = key;
+                const all = object_1.merge({}, command, alias);
+                all.name = alias.name || key;
                 all.command = command.command;
-                all.args = al.args || all.args;
+                all.args = alias.args || all.args;
                 config.commands[key] = all;
             }
         }
-        const commands = config.commands;
-        const concurrents = config.concurrents;
-        return { commands, concurrents };
+        return config;
     });
 }
+const Parser = {
+    commandFromString(command) {
+        if (typeof command == 'string') {
+            return { command };
+        }
+        return command;
+    },
+    concurrentFromStrings(commands) {
+        if (Array.isArray(commands)) {
+            return { commands };
+        }
+        return commands;
+    },
+    source(c, source) {
+        c.source = source;
+    },
+    conditions(c) {
+        const conditions = c.conditions;
+        const platform = Os.platform();
+        const arch = Os.arch();
+        let valid = false;
+        for (let index = 0; index < conditions.length; index++) {
+            const condition = conditions[index];
+            if (typeof condition.platform == 'string' && condition.platform != platform) {
+                continue;
+            }
+            if (typeof condition.arch == 'string' && condition.arch != arch) {
+                continue;
+            }
+            valid = true;
+            if (condition.override != null) {
+                c = object_1.merge(c, condition.override);
+            }
+        }
+        return valid;
+    }
+};

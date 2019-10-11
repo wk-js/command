@@ -1,5 +1,5 @@
 import { create_list, WKOptions, extract_wks } from './utils/cli'
-import { parse, filter, ARGv } from "./utils/argv"
+import { parse, ARGv } from "./utils/argv"
 import { Runner } from './runner'
 import * as Log from './log'
 import * as Print from './utils/print'

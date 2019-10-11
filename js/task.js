@@ -10,7 +10,7 @@ class Task {
         this._source = "";
         this._binPath = "";
         this._visible = true;
-        this._concurrent = false;
+        this._concurrent = [];
         this._description = "";
         this._dependencies = [];
         this._variables = {};
@@ -34,7 +34,7 @@ class Task {
         this._dependencies = command._dependencies.slice(0);
         this._binPath = command._binPath;
         this._visible = command._visible;
-        this._concurrent = command._concurrent;
+        this._concurrent = command._concurrent.slice(0);
         this._description = command._description;
         this._variables = object_1.clone(command._variables);
         return this;
@@ -96,7 +96,7 @@ class Task {
             binPath: template_1.template2(this._binPath, this._variables),
             description: template_1.template2(this._description, this._variables),
             visible: this._visible,
-            concurrent: this._concurrent,
+            concurrent: this._concurrent.slice(0).map((item) => template_1.template2(item, this._variables)),
             args: this._args.slice(0).map((item) => template_1.template2(item, this._variables)),
             dependencies: this._dependencies.slice(0).map((item) => template_1.template2(item, this._variables)),
             template: object_1.clone(this._variables)

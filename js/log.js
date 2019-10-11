@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const chalk_1 = __importDefault(require("chalk"));
 const string_1 = require("lol/js/string");
-let _level = 0 /* SILENT */;
+let _level = 1 /* OUTPUT */;
 function level(value = _level) {
     return _level = value;
 }

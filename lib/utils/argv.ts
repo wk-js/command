@@ -41,31 +41,3 @@ export function parse(argv: string[]) {
   return parameters
 
 }
-
-export function filter(argv: ARGv, regex: RegExp, omit = false) {
-  const argv_arr: string[] = []
-  const parameters: ARGv = {}
-
-  Object.keys(argv)
-  .forEach(key => {
-    if ((omit && !key.match(regex)) || (!omit && key.match(regex))) {
-      const new_key = key.replace(regex, '')
-      parameters[new_key] = argv[key]
-
-      if (isNaN(parseInt(key))) {
-        argv_arr.push(`--${new_key}=${argv[key]}`)
-      } else {
-        argv_arr.push(argv[key] as string)
-      }
-    }
-  })
-
-  Object.defineProperty(parameters, '___argv', {
-    enumerable: false,
-    writable: false,
-    configurable: false,
-    value: argv_arr.join(' ')
-  })
-
-  return parameters
-}

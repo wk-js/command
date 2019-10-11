@@ -1,6 +1,5 @@
 import { TaskList } from '../task-list';
 import { Config } from '../importer';
-import { merge, clone } from 'lol/js/object';
 
 export interface WKOptions {
   global: boolean;
@@ -26,13 +25,16 @@ export function create_list(config: Config) {
   })
 
   Object.keys(config.concurrents).forEach((name) => {
-    const command = config.concurrents[name]
+    const concurrent = config.concurrents[name]
     const c = list.add(name, '[concurrent]')
 
-    c.name(name)
-    c.concurrent(true)
-    c.dependsOn(...command)
-    // c.variables(clone(argv))
+    c.name(concurrent.name ? concurrent.name : name)
+    c.concurrent(concurrent.commands)
+    if (concurrent.source) c.source(concurrent.source)
+    if (typeof concurrent.visible == 'boolean') c.visible(concurrent.visible)
+    if (concurrent.dependsOn) c.dependsOn(...concurrent.dependsOn)
+    if (concurrent.description) c.description(concurrent.description)
+    if (concurrent.variables) c.variables(concurrent.variables)
   })
 
   return list

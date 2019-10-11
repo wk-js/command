@@ -18,12 +18,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const task_list_1 = require("./task-list");
 const Path = __importStar(require("path"));
 const Print = __importStar(require("./utils/print"));
+const Log = __importStar(require("./log"));
 const utils_1 = require("./utils");
 const argv_1 = require("./utils/argv");
 const cli_1 = require("./utils/cli");
 class Runner {
     constructor(tasks = new task_list_1.TaskList) {
         this.tasks = tasks;
+    }
+    logLevel(level) {
+        Log.level(level);
     }
     static create(tasks) {
         return new Runner(tasks);
@@ -62,26 +66,24 @@ class Runner {
             }
             const task = command.toLiteral();
             let results = [];
-            if (task.concurrent) {
-                if (task.dependencies.length > 0) {
-                    const res0 = yield this.parallel(...task.dependencies);
-                    results = results.concat(...res0);
-                }
-                return results;
-            }
             if (task.dependencies.length > 0) {
                 const res1 = yield this.serie(...task.dependencies);
                 results = results.concat(...res1);
+            }
+            if (task.concurrent.length > 0) {
+                const res0 = yield this.parallel(...task.concurrent);
+                results = results.concat(...res0);
+                return results;
             }
             const env = Object.assign({ FORCE_COLOR: true }, process.env);
             const cmd = task.binPath.length > 0 ? Path.join(task.binPath, task.cmd) : task.cmd;
             Print.command(`${cmd} ${task.args.join(' ')}`, task.cwd);
             const [code, signal] = yield utils_1.execute(cmd, task.args, {
                 cwd: task.cwd,
-                stdio: "inherit",
+                stdio: Log.level() == 0 /* SILENT */ ? "ignore" : "inherit",
                 shell: true,
                 env
-            }).promise;
+            }).promise();
             results.push({
                 success: code == 0 || signal == 'SIGINT',
                 taskName: task.name

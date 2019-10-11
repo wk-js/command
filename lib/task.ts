@@ -10,7 +10,7 @@ export class Task {
   private _source: string = ""
   private _binPath: string = ""
   private _visible: boolean = true
-  private _concurrent: boolean = false
+  private _concurrent: string[] = []
   private _description: string = ""
   private _dependencies: string[] = []
   private _variables: Record<string, string> = {}
@@ -39,7 +39,7 @@ export class Task {
     this._dependencies = command._dependencies.slice(0)
     this._binPath = command._binPath
     this._visible = command._visible
-    this._concurrent = command._concurrent
+    this._concurrent = command._concurrent.slice(0)
     this._description = command._description
     this._variables = clone(command._variables)
     return this
@@ -75,7 +75,7 @@ export class Task {
     return this
   }
 
-  concurrent(_concurrent: boolean) {
+  concurrent(_concurrent: string[]) {
     this._concurrent = _concurrent
     return this
   }
@@ -113,7 +113,7 @@ export class Task {
       binPath: template2(this._binPath, this._variables),
       description: template2(this._description, this._variables),
       visible: this._visible,
-      concurrent: this._concurrent,
+      concurrent: this._concurrent.slice(0).map((item) => template2(item, this._variables)),
       args: this._args.slice(0).map((item) => template2(item, this._variables)),
       dependencies: this._dependencies.slice(0).map((item) => template2(item, this._variables)),
       template: clone(this._variables)
