@@ -5,8 +5,7 @@
   "bin": "./bin/wk.js",
   "types": "js",
   "scripts": {
-    "tsc": "tsc",
-    "test": "mocha -r ts-node/register ./test/**/*.spec.ts"
+    "start": "node bin/wk.js"
   },
   "author": "",
   "license": "ISC",

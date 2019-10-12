@@ -3,17 +3,24 @@ import { parse, ARGv } from "./utils/argv"
 import { Runner } from './runner'
 import * as Log from './log'
 import * as Print from './utils/print'
-import { load, lookup, Config } from './importer'
+import * as Path from 'path'
+import { load, lookup, Config, load_globals, load_package } from './importer'
 
 async function cli({ task, wk }: { task: ARGv, wk: WKOptions }) {
   let config: Config
 
-  const importGlobals = typeof wk.global == 'boolean' ? wk.global : false
-
   if (wk.commands) {
-    config = await load(wk.commands, importGlobals)
+    config = await load(wk.commands)
   } else {
-    config = await lookup(importGlobals)
+    config = await lookup()
+  }
+
+  if (config.importGlobals) {
+    await load_globals(config)
+  }
+
+  if (config.importPackage) {
+    await load_package(Path.join(process.cwd(), 'package.json'), config)
   }
 
   const runner = new Runner(create_list(config))

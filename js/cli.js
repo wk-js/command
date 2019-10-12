@@ -20,16 +20,22 @@ const argv_1 = require("./utils/argv");
 const runner_1 = require("./runner");
 const Log = __importStar(require("./log"));
 const Print = __importStar(require("./utils/print"));
+const Path = __importStar(require("path"));
 const importer_1 = require("./importer");
 function cli({ task, wk }) {
     return __awaiter(this, void 0, void 0, function* () {
         let config;
-        const importGlobals = typeof wk.global == 'boolean' ? wk.global : false;
         if (wk.commands) {
-            config = yield importer_1.load(wk.commands, importGlobals);
+            config = yield importer_1.load(wk.commands);
         }
         else {
-            config = yield importer_1.lookup(importGlobals);
+            config = yield importer_1.lookup();
+        }
+        if (config.importGlobals) {
+            yield importer_1.load_globals(config);
+        }
+        if (config.importPackage) {
+            yield importer_1.load_package(Path.join(process.cwd(), 'package.json'), config);
         }
         const runner = new runner_1.Runner(cli_1.create_list(config));
         if (typeof task['0'] == 'string') {

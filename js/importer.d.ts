@@ -35,13 +35,20 @@ export interface ConfigFile {
     commands: FileCommandRecord;
     concurrents: FileConcurrentRecord;
     importGlobals?: boolean;
+    importPackage?: boolean;
     imports?: string[];
     aliases?: FileCommandAlias;
 }
 export interface Config {
+    importGlobals: boolean;
+    importPackage: boolean;
     commands: CommandRecord;
     concurrents: ConcurrentRecord;
 }
-export declare function load(path: string, importGlobals?: boolean): Promise<Config>;
-export declare function load_directory(path: string, importGlobals?: boolean): Promise<Config>;
-export declare function lookup(importGlobals?: boolean): Promise<Config>;
+export declare function default_config(): Config;
+export declare function load(path: string, config?: Config): Promise<Config>;
+export declare function load_directory(path: string, config?: Config): Promise<Config>;
+export declare function lookup(config?: Config): Promise<Config>;
+export declare function load_globals(config?: Config): Promise<Config>;
+export declare function load_package(path: string, config?: Config): Promise<Config>;
+export declare function merge_config(...configs: Config[]): Config;

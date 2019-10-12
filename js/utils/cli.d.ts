@@ -1,7 +1,6 @@
 import { TaskList } from '../task-list';
 import { Config } from '../importer';
 export interface WKOptions {
-    global: boolean;
     log: string | boolean;
     commands?: string;
 }

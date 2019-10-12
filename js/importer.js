@@ -24,40 +24,42 @@ const Path = __importStar(require("path"));
 const Fs = __importStar(require("fs"));
 const toml_1 = __importDefault(require("toml"));
 const Os = __importStar(require("os"));
-function load(path, importGlobals = false) {
+function default_config() {
+    return {
+        importGlobals: false,
+        importPackage: false,
+        commands: {},
+        concurrents: {}
+    };
+}
+exports.default_config = default_config;
+function load(path, config) {
     return __awaiter(this, void 0, void 0, function* () {
-        let cmds = {};
-        let cnts = {};
+        let current = config || default_config();
         const files = fs_1.fetch(path);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const { commands, concurrents } = yield _load(file, importGlobals);
-            cmds = object_1.merge(cmds, commands);
-            cnts = object_1.merge(cnts, concurrents);
+            merge_config(current, yield _load(file));
         }
-        return { commands: cmds, concurrents: cnts };
+        return current;
     });
 }
 exports.load = load;
-function load_directory(path, importGlobals = false) {
+function load_directory(path, config) {
     return __awaiter(this, void 0, void 0, function* () {
-        let cmds = {};
-        let cnts = {};
         const files = fs_1.fetch([
             Path.join(path, '**/*.toml'),
             Path.join(path, '**/*.json')
         ]);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const { commands, concurrents } = yield _load(file, importGlobals);
-            cmds = object_1.merge(cmds, commands);
-            cnts = object_1.merge(cnts, concurrents);
+            config = yield load(file, config);
         }
-        return { commands: cmds, concurrents: cnts };
+        return config;
     });
 }
 exports.load_directory = load_directory;
-function lookup(importGlobals = false) {
+function lookup(config) {
     const paths = [
         Path.join(process.cwd(), 'Commands.toml'),
         Path.join(process.cwd(), 'commands.toml'),
@@ -65,18 +67,18 @@ function lookup(importGlobals = false) {
     ];
     for (const p of paths) {
         if (fs_1.isFile(p))
-            return load(p, importGlobals);
+            return load(p, config);
     }
     throw new Error('No commands found.');
 }
 exports.lookup = lookup;
-function _load(path, importGlobals = false) {
+function _load(path) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!fs_1.isFile(path)) {
             throw new Error(`"${path}" is not a file`);
         }
         let file = { commands: {}, concurrents: {} };
-        let config = { commands: {}, concurrents: {} };
+        let config = default_config();
         const content = Fs.readFileSync(path, 'utf-8');
         try {
             if (Path.extname(path) == '.toml') {
@@ -89,12 +91,8 @@ function _load(path, importGlobals = false) {
         catch (e) {
             throw new Error(`Cannot parse "${path}"`);
         }
-        importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals && importGlobals : false;
-        // Auto import global tasks
-        if (importGlobals) {
-            const global_dir = Path.join(Os.homedir(), '.wk');
-            file.commands = object_1.merge(yield load(Path.join(global_dir, '**/*.{json,toml}'), false), file.commands);
-        }
+        config.importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals : false;
+        config.importPackage = typeof file.importPackage == 'boolean' ? file.importPackage : false;
         // Parse commands
         for (const key in file.commands) {
             const command = Parser.commandFromString(file.commands[key]);
@@ -116,9 +114,7 @@ function _load(path, importGlobals = false) {
         // Load extended files
         if (file.imports != null) {
             for (const e of file.imports) {
-                const imp = yield load(e, importGlobals);
-                config.commands = object_1.merge(imp.commands, config.commands);
-                config.concurrents = object_1.merge(imp.concurrents, config.concurrents);
+                yield load(e, config);
             }
         }
         // Resolve aliases
@@ -139,6 +135,51 @@ function _load(path, importGlobals = false) {
         return config;
     });
 }
+function load_globals(config) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const global_dir = Path.join(Os.homedir(), '.wk');
+        const path = Path.join(global_dir, '**/*.{json,toml}');
+        return load(path, config);
+    });
+}
+exports.load_globals = load_globals;
+function load_package(path, config) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!fs_1.isFile(path)) {
+            throw new Error(`This package at path "${path}" does not exist.`);
+        }
+        let current = config || default_config();
+        const file = yield fs_1.readFile(path, { encoding: 'utf-8' });
+        const pkg = JSON.parse(file);
+        if (pkg.scripts) {
+            for (const name in pkg.scripts) {
+                const command = pkg.scripts[name];
+                current.commands[name] = {
+                    name,
+                    command,
+                    cwd: Path.dirname(path)
+                };
+            }
+        }
+        return current;
+    });
+}
+exports.load_package = load_package;
+function merge_config(...configs) {
+    const first = configs.shift();
+    for (let i = 0; i < configs.length; i++) {
+        if (first.importGlobals != configs[i].importGlobals && configs[i].importGlobals) {
+            first.importGlobals = true;
+        }
+        if (first.importPackage != configs[i].importPackage && configs[i].importPackage) {
+            first.importPackage = true;
+        }
+        object_1.merge(first.commands, configs[i].commands);
+        object_1.merge(first.concurrents, configs[i].concurrents);
+    }
+    return first;
+}
+exports.merge_config = merge_config;
 const Parser = {
     commandFromString(command) {
         if (typeof command == 'string') {
