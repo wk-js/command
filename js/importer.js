@@ -39,7 +39,7 @@ function load(path, config) {
         const files = fs_1.fetch(path);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            merge_config(current, yield _load(file));
+            merge_config(yield _load(file), current);
         }
         return current;
     });
