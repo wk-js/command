@@ -2,6 +2,7 @@ import { RunnerResult } from "../runner"
 import { TaskList } from "../task-list"
 import * as Log from '../log'
 import chalk from "chalk";
+import { sortByKey } from 'lol/js/array'
 
 export function command(command: string, cwd: string) {
   if (Log.level() < Log.Level.LIGHT) return
@@ -26,7 +27,7 @@ export function err(e: Error) {
 export function tasks(list: TaskList) {
   const verbose = Log.level() == Log.Level.FULL
   console.log('Task availables')
-  const tasks: (string | [string, string])[] = list.all()
+  let tasks: [string, string][] = list.all()
     .map(t => t.toLiteral())
     .filter(t => verbose ? verbose : t.visible)
     .map(t => {
@@ -35,6 +36,7 @@ export function tasks(list: TaskList) {
       if (t.description) description = `${t.description} ${description}`
       return [t.name, description]
     })
+  tasks = sortByKey(tasks as any, "0") as unknown as [string, string][]
   Log.list(tasks)
 }
 

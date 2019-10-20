@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const Log = __importStar(require("../log"));
 const chalk_1 = __importDefault(require("chalk"));
+const array_1 = require("lol/js/array");
 function command(command, cwd) {
     if (Log.level() < 2 /* LIGHT */)
         return;
@@ -38,7 +39,7 @@ exports.err = err;
 function tasks(list) {
     const verbose = Log.level() == 3 /* FULL */;
     console.log('Task availables');
-    const tasks = list.all()
+    let tasks = list.all()
         .map(t => t.toLiteral())
         .filter(t => verbose ? verbose : t.visible)
         .map(t => {
@@ -48,6 +49,7 @@ function tasks(list) {
             description = `${t.description} ${description}`;
         return [t.name, description];
     });
+    tasks = array_1.sortByKey(tasks, "0");
     Log.list(tasks);
 }
 exports.tasks = tasks;

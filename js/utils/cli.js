@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const task_list_1 = require("../task-list");
-const array_1 = require("lol/js/array");
 function create_list(config) {
     const list = task_list_1.TaskList.create();
-    array_1.sort(Object.keys(config.commands)).forEach((name) => {
+    Object.keys(config.commands).forEach((name) => {
         const command = config.commands[name];
         const c = list.add(name, command.command);
         c.name(command.name ? command.name : name);
@@ -25,7 +24,7 @@ function create_list(config) {
         if (command.variables)
             c.variables(command.variables);
     });
-    array_1.sort(Object.keys(config.concurrents)).forEach((name) => {
+    Object.keys(config.concurrents).forEach((name) => {
         const concurrent = config.concurrents[name];
         const c = list.add(name, '[concurrent]');
         c.name(concurrent.name ? concurrent.name : name);
