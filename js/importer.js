@@ -39,7 +39,7 @@ function load(path, config) {
         const files = fs_1.fetch(path);
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            merge_config(yield _load(file), current);
+            merge_config(current, yield _load(file));
         }
         return current;
     });
@@ -114,7 +114,7 @@ function _load(path) {
         // Load extended files
         if (file.imports != null) {
             for (const e of file.imports) {
-                yield load(e, config);
+                config = merge_config(yield load(e), config);
             }
         }
         // Resolve aliases

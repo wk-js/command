@@ -74,7 +74,7 @@ export async function load(path: string, config?: Config) {
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    merge_config(await _load(file), current)
+    merge_config(current, await _load(file))
   }
 
   return current
@@ -153,7 +153,7 @@ async function _load(path: string) {
   // Load extended files
   if (file.imports != null) {
     for (const e of file.imports) {
-      await load(e, config)
+      config = merge_config(await load(e), config)
     }
   }
 
