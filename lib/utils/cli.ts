@@ -1,5 +1,6 @@
 import { TaskList } from '../task-list';
 import { Config } from '../importer';
+import { sort } from 'lol/js/array'
 
 export interface WKOptions {
   log: string | boolean;
@@ -9,7 +10,7 @@ export interface WKOptions {
 export function create_list(config: Config) {
   const list = TaskList.create()
 
-  Object.keys(config.commands).forEach((name) => {
+  sort(Object.keys(config.commands)).forEach((name) => {
     const command = config.commands[name]
     const c = list.add(name, command.command)
     c.name(command.name ? command.name : name)
@@ -23,7 +24,7 @@ export function create_list(config: Config) {
     if (command.variables) c.variables(command.variables)
   })
 
-  Object.keys(config.concurrents).forEach((name) => {
+  sort(Object.keys(config.concurrents)).forEach((name) => {
     const concurrent = config.concurrents[name]
     const c = list.add(name, '[concurrent]')
 
