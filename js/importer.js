@@ -100,7 +100,12 @@ function _load(path) {
             if (Array.isArray(command.conditions) && !Parser.conditions(command)) {
                 continue;
             }
-            config.commands[key] = command;
+            const name = command.name || key;
+            config.commands[name] = command;
+            // Add aliases from commands
+            if (command.aliases) {
+                Parser.aliasesFromCommand(config, name, command.aliases);
+            }
         }
         // Parse concurrents
         for (const key in file.concurrents) {
@@ -119,18 +124,7 @@ function _load(path) {
         }
         // Resolve aliases
         if (file.aliases != null) {
-            for (const key in file.aliases) {
-                let alias = Parser.commandFromString(file.aliases[key]);
-                const command = config.commands[alias.command];
-                if (!command) {
-                    throw new Error(`Cannot alias "${key}" with "${alias.command}"`);
-                }
-                const all = object_1.merge({}, command, alias);
-                all.name = alias.name || key;
-                all.command = command.command;
-                all.args = alias.args || all.args;
-                config.commands[key] = all;
-            }
+            Parser.aliases(config, file.aliases);
         }
         return config;
     });
@@ -195,6 +189,30 @@ const Parser = {
     },
     source(c, source) {
         c.source = source;
+    },
+    aliasesFromCommand(config, name, aliases) {
+        const _aliases = {};
+        for (const _alias of aliases) {
+            const alias = Parser.commandFromString(_alias);
+            alias.name = name + ':' + alias.name;
+            alias.command = name;
+            _aliases[alias.name] = alias;
+        }
+        Parser.aliases(config, _aliases);
+    },
+    aliases(config, aliases) {
+        for (const key in aliases) {
+            let alias = Parser.commandFromString(aliases[key]);
+            const command = config.commands[alias.command];
+            if (!command) {
+                throw new Error(`Cannot alias "${key}" with "${alias.command}"`);
+            }
+            const all = object_1.merge({}, command, alias);
+            all.name = alias.name || key;
+            all.command = command.command;
+            all.args = alias.args || all.args;
+            config.commands[key] = all;
+        }
     },
     conditions(c) {
         const conditions = c.conditions;

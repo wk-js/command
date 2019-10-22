@@ -9,13 +9,14 @@ import { Runner } from "../js/runner";
 import { Level } from "../js/log";
 
 const LOAD_PATH = 'tmp/test-units'
+const wk = Path.join(__dirname, '../bin/wk.js')
 
 async function run(command?: string) : Promise<[number, string]> {
   let p: { child: ChildProcess, promise: () => Promise<[number, string, ChildProcess]> }
   if (command) {
-    p = execute("../../bin/wk.js", command.split(' '), { stdio: "pipe", cwd: LOAD_PATH })
+    p = execute(wk, command.split(' '), { stdio: "pipe", cwd: LOAD_PATH })
   } else {
-    p = execute("../../bin/wk.js", [], { stdio: "pipe", cwd: LOAD_PATH })
+    p = execute(wk, [], { stdio: "pipe", cwd: LOAD_PATH })
   }
   const m = new MemoryStream()
   p.child.stdout.pipe(m)
@@ -54,6 +55,13 @@ description = "Call ls"
 commands = [ "hello --var.name Paul", "welcome" ]
 description = "Call hello and welcome"
 
+[commands.echo]
+command = "echo \${message}"
+aliases = [
+  { name = "world", variables = { message = "Hello World" } }, 
+  { name = "john" , variables = { message = "Hello John"  } } 
+]
+
   `, Path.join(LOAD_PATH, 'commands.toml'))
   await writeFile(`
 [commands]
@@ -80,7 +88,15 @@ after(async () => {
   await removeDir(LOAD_PATH)
 })
 
-describe("Command Line", async () => {
+describe.only("Command Line", async () => {
+
+  it.only("List sub aliases", async () => {
+    const [code, stdout] = await run()
+    assert.equal(true, !!stdout.match(new RegExp(`echo`)));
+    assert.equal(true, !!stdout.match(new RegExp(`echo:john`)));
+    assert.equal(true, !!stdout.match(new RegExp(`echo:world`)));
+    assert.equal(code, 0)
+  })
 
   it("Descriptions", async () => {
     const [code, stdout] = await run()

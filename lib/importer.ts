@@ -29,6 +29,7 @@ export interface Command {
   dependsOn?: string[];
   conditions?: CommandCondition[];
   variables?: Record<string, string>;
+  aliases?: (string|Command)[]
 }
 
 export interface Concurrent {
@@ -137,7 +138,13 @@ async function _load(path: string) {
     if (Array.isArray(command.conditions) && !Parser.conditions(command)) {
       continue
     }
-    config.commands[key] = command
+    const name = command.name || key
+    config.commands[name] = command
+
+    // Add aliases from commands
+    if (command.aliases) {      
+      Parser.aliasesFromCommand(config, name, command.aliases)
+    }
   }
 
   // Parse concurrents
@@ -159,20 +166,7 @@ async function _load(path: string) {
 
   // Resolve aliases
   if (file.aliases != null) {
-    for (const key in file.aliases) {
-      let alias = Parser.commandFromString(file.aliases[key])
-      const command = config.commands[alias.command] as Command
-
-      if (!command) {
-        throw new Error(`Cannot alias "${key}" with "${alias.command}"`)
-      }
-
-      const all = merge({}, command, alias) as Command
-      all.name = alias.name || key
-      all.command = command.command
-      all.args = alias.args || all.args
-      config.commands[key] = all
-    }
+    Parser.aliases(config, file.aliases)
   }
 
   return config
@@ -244,6 +238,34 @@ const Parser = {
 
   source(c: Command|Concurrent, source: string) {
     c.source = source
+  },
+
+  aliasesFromCommand(config: Config, name: string, aliases: (string|Command)[]) {
+    const _aliases: FileCommandAlias = {}
+    for (const _alias of aliases) {
+      const alias = Parser.commandFromString(_alias)
+      alias.name = name + ':' + alias.name      
+      alias.command = name
+      _aliases[alias.name] = alias
+    }    
+    Parser.aliases(config, _aliases)
+  },
+
+  aliases(config: Config, aliases: FileCommandAlias) {
+    for (const key in aliases) {
+      let alias = Parser.commandFromString(aliases[key])
+      const command = config.commands[alias.command] as Command
+
+      if (!command) {
+        throw new Error(`Cannot alias "${key}" with "${alias.command}"`)
+      }
+
+      const all = merge({}, command, alias) as Command
+      all.name = alias.name || key
+      all.command = command.command
+      all.args = alias.args || all.args
+      config.commands[key] = all
+    }
   },
 
   conditions(c: Command|Concurrent) {

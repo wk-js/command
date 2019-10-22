@@ -20,6 +20,7 @@ export interface Command {
     dependsOn?: string[];
     conditions?: CommandCondition[];
     variables?: Record<string, string>;
+    aliases?: (string | Command)[];
 }
 export interface Concurrent {
     commands: string[];
