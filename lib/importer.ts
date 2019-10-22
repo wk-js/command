@@ -19,27 +19,25 @@ export interface CommandCondition {
 
 export interface Command {
   command: string;
-  name?: string;
+  name: string;
   source?: string;
   cwd?: string;
   binPath?: string;
   description?: string;
   visible?: boolean;
-  type?: "main";
   args?: string[];
   dependsOn?: string[];
   conditions?: CommandCondition[];
   variables?: Record<string, string>;
-  aliases?: (string|Command)[]
+  subcommands?: (string|Command)[]
 }
 
 export interface Concurrent {
   commands: string[];
-  name?: string;
+  name: string;
   source?: string;
   description?: string;
   visible?: boolean;
-  type?: "main";
   dependsOn?: string[];
   conditions?: CommandCondition[];
   variables?: Record<string, string>;
@@ -130,48 +128,32 @@ async function _load(path: string) {
     throw new Error(`Cannot parse "${path}"`)
   }
 
-  // Pool of unregistered task
-  const unregisteredCommands: string[] = []
-  const unregisteredConcurrents: string[] = []
-
   config.importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals : false
   config.importPackage = typeof file.importPackage == 'boolean' ? file.importPackage : false
 
   // Parse commands
   for (const key in file.commands) {
-    const command = Parser.commandFromString(file.commands[key])
-    Parser.source(command, path)
-    if (Array.isArray(command.conditions) && !Parser.conditions(command)) {
+    const command = Utils.commandFromString(file.commands[key], key, path)
+    if (Array.isArray(command.conditions) && !Utils.conditions(command)) {
       continue
     }
 
-    const name = command.name || key
-    config.commands[name] = command
-
     // Add aliases from commands
-    if (command.aliases) {
-      Parser.aliasesFromCommand(config, name, command.aliases)
-    }
-
-    if (command.type == "main") {
-      unregisteredCommands.push( name )
+    if (command.subcommands) {
+      Utils.registerSubcommands(config, command, command.subcommands)
+    } else {
+      Utils.registerCommand(config, command)
     }
   }
 
   // Parse concurrents
   for (const key in file.concurrents) {
-    const concurrent = Parser.concurrentFromStrings(file.concurrents[key])
-    Parser.source(concurrent, path)
-    if (Array.isArray(concurrent.conditions) && !Parser.conditions(concurrent)) {
+    const concurrent = Utils.concurrentFromStrings(file.concurrents[key], key, path)
+    if (Array.isArray(concurrent.conditions) && !Utils.conditions(concurrent)) {
       continue
     }
 
-    const name = concurrent.name || key
-    config.concurrents[key] = concurrent
-
-    if (concurrent.type == "main") {
-      unregisteredCommands.push( name )
-    }
+    Utils.registerConcurrent(config, concurrent)
   }
 
   // Load extended files
@@ -183,11 +165,8 @@ async function _load(path: string) {
 
   // Resolve aliases
   if (file.aliases != null) {
-    Parser.aliases(config, file.aliases)
+    Utils.registerAliases(config, file.aliases)
   }
-
-  config.commands = omit(config.commands, ...unregisteredCommands)
-  config.concurrents = omit(config.concurrents, ...unregisteredConcurrents)
 
   return config
 }
@@ -210,20 +189,18 @@ export async function load_package(path: string, config?: Config) {
   if (pkg.scripts) {
     for (const name in pkg.scripts) {
       const command = pkg.scripts[name]
-      current.commands[name] = {
+      Utils.registerCommand(current, {
         name,
         command,
         cwd: Path.dirname(path)
-      }
+      })
     }
   }
 
   return current
 }
 
-export function merge_config(...configs: Config[]) {
-  const first = configs.shift() as Config
-
+export function merge_config(first: Config, ...configs: Config[]) {
   for (let i = 0; i < configs.length; i++) {
     if (first.importGlobals != configs[i].importGlobals && configs[i].importGlobals) {
       first.importGlobals = true
@@ -240,52 +217,117 @@ export function merge_config(...configs: Config[]) {
   return first
 }
 
-const Parser = {
+const Utils = {
 
-  commandFromString(command: string|Command) : Command {
+  commandFromString(command: string|Command, name: string, source?: string) : Command {
     if (typeof command == 'string') {
-      return { command }
+      return { command, name, source }
     }
+
+    if (source) command.source = source
+
+    if (!command.name || (typeof command.name == 'string' && command.name.length == 0)) {
+      command.name = name
+    }
+
     return command
   },
 
-  concurrentFromStrings(commands: string[]|Concurrent) : Concurrent {
-    if (Array.isArray(commands)) {
-      return { commands }
+  concurrentFromStrings(concurrent: string[]|Concurrent, name: string, source?: string) : Concurrent {
+    if (Array.isArray(concurrent)) {
+      return { commands: concurrent, name, source }
     }
-    return commands
-  },
 
-  source(c: Command|Concurrent, source: string) {
-    c.source = source
-  },
+    if (source) concurrent.source = source
 
-  aliasesFromCommand(config: Config, name: string, aliases: (string|Command)[]) {
-    const _aliases: FileCommandAlias = {}
-    for (const _alias of aliases) {
-      const alias = Parser.commandFromString(_alias)
-      alias.name = name + ':' + alias.name
-      alias.command = name
-      _aliases[alias.name] = alias
+    if (!concurrent.name || (typeof concurrent.name == 'string' && concurrent.name.length == 0)) {
+      concurrent.name = name
     }
-    Parser.aliases(config, _aliases)
+
+    return concurrent
   },
 
-  aliases(config: Config, aliases: FileCommandAlias) {
+  registerSubcommands(config: Config, command: Command, subcommands: (string|Command)[]) {
+    let i = 0
+
+    for (const _subcommand of subcommands) {
+      let subcommand = Utils.commandFromString(_subcommand, i.toString())
+      subcommand = Utils.mergeCommands(command, subcommand)
+      subcommand.name = command.name + ':' + subcommand.name
+
+      // Register subcommand
+      Utils.registerCommand(config, subcommand)
+      i++
+    }
+  },
+
+  registerAliases(config: Config, aliases: FileCommandAlias) {
     for (const key in aliases) {
-      let alias = Parser.commandFromString(aliases[key])
+      let alias = Utils.commandFromString(aliases[key], key)
       const command = config.commands[alias.command] as Command
 
       if (!command) {
         throw new Error(`Cannot alias "${key}" with "${alias.command}"`)
       }
 
-      const all = merge({}, command, alias) as Command
-      all.name = alias.name || key
-      all.command = command.command
-      all.args = alias.args || all.args
-      config.commands[key] = all
+      // Merge alias to command
+      const merged = Utils.mergeCommands(command, alias)
+      merged.command = command.command
+
+      // Register alias
+      Utils.registerCommand(config, merged)
     }
+  },
+
+  registerCommand(config: Config, command: Command) {
+    config.commands[command.name] = command
+  },
+
+  registerConcurrent(config: Config, concurrent: Concurrent) {
+    config.concurrents[concurrent.name] = concurrent
+  },
+
+  mergeCommands(...commands: Command[]) {
+    let current: Command = { name: "", command: "" }
+
+    for (let i = 0; i < commands.length; i++) {
+      const command = commands[i]
+      current = merge<Command>(current, command)
+
+      current.args = current.args || []
+      current.args = current.args.concat(command.args || [])
+
+      current.dependsOn = current.dependsOn || []
+      current.dependsOn = current.dependsOn.concat(command.dependsOn || [])
+
+      current.conditions = current.conditions || []
+      current.conditions = current.conditions.concat(command.conditions || [])
+
+      current.subcommands = current.subcommands || []
+      current.subcommands = current.subcommands.concat(command.subcommands || [])
+    }
+
+    return current
+  },
+
+  mergeConcurrents(...commands: Concurrent[]) {
+    let merged: Concurrent = { name: "", commands: [] }
+
+    for (let i = 0; i < commands.length; i++) {
+      const cmd = commands[i]
+      merge<Concurrent>(merged, cmd)
+
+      merged.commands = merged.commands || []
+      merged.commands = merged.commands.concat(cmd.commands || [])
+
+      merged.dependsOn = merged.dependsOn || []
+      merged.dependsOn = merged.dependsOn.concat(cmd.dependsOn || [])
+
+      merged.conditions = merged.conditions || []
+      merged.conditions = merged.conditions.concat(cmd.conditions || [])
+    }
+
+    return merged
   },
 
   conditions(c: Command|Concurrent) {

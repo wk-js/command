@@ -91,40 +91,29 @@ function _load(path) {
         catch (e) {
             throw new Error(`Cannot parse "${path}"`);
         }
-        // Pool of unregistered task
-        const unregisteredCommands = [];
-        const unregisteredConcurrents = [];
         config.importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals : false;
         config.importPackage = typeof file.importPackage == 'boolean' ? file.importPackage : false;
         // Parse commands
         for (const key in file.commands) {
-            const command = Parser.commandFromString(file.commands[key]);
-            Parser.source(command, path);
-            if (Array.isArray(command.conditions) && !Parser.conditions(command)) {
+            const command = Utils.commandFromString(file.commands[key], key, path);
+            if (Array.isArray(command.conditions) && !Utils.conditions(command)) {
                 continue;
             }
-            const name = command.name || key;
-            config.commands[name] = command;
             // Add aliases from commands
-            if (command.aliases) {
-                Parser.aliasesFromCommand(config, name, command.aliases);
+            if (command.subcommands) {
+                Utils.registerSubcommands(config, command, command.subcommands);
             }
-            if (command.type == "main") {
-                unregisteredCommands.push(name);
+            else {
+                Utils.registerCommand(config, command);
             }
         }
         // Parse concurrents
         for (const key in file.concurrents) {
-            const concurrent = Parser.concurrentFromStrings(file.concurrents[key]);
-            Parser.source(concurrent, path);
-            if (Array.isArray(concurrent.conditions) && !Parser.conditions(concurrent)) {
+            const concurrent = Utils.concurrentFromStrings(file.concurrents[key], key, path);
+            if (Array.isArray(concurrent.conditions) && !Utils.conditions(concurrent)) {
                 continue;
             }
-            const name = concurrent.name || key;
-            config.concurrents[key] = concurrent;
-            if (concurrent.type == "main") {
-                unregisteredCommands.push(name);
-            }
+            Utils.registerConcurrent(config, concurrent);
         }
         // Load extended files
         if (file.imports != null) {
@@ -134,10 +123,8 @@ function _load(path) {
         }
         // Resolve aliases
         if (file.aliases != null) {
-            Parser.aliases(config, file.aliases);
+            Utils.registerAliases(config, file.aliases);
         }
-        config.commands = object_1.omit(config.commands, ...unregisteredCommands);
-        config.concurrents = object_1.omit(config.concurrents, ...unregisteredConcurrents);
         return config;
     });
 }
@@ -160,19 +147,18 @@ function load_package(path, config) {
         if (pkg.scripts) {
             for (const name in pkg.scripts) {
                 const command = pkg.scripts[name];
-                current.commands[name] = {
+                Utils.registerCommand(current, {
                     name,
                     command,
                     cwd: Path.dirname(path)
-                };
+                });
             }
         }
         return current;
     });
 }
 exports.load_package = load_package;
-function merge_config(...configs) {
-    const first = configs.shift();
+function merge_config(first, ...configs) {
     for (let i = 0; i < configs.length; i++) {
         if (first.importGlobals != configs[i].importGlobals && configs[i].importGlobals) {
             first.importGlobals = true;
@@ -186,45 +172,89 @@ function merge_config(...configs) {
     return first;
 }
 exports.merge_config = merge_config;
-const Parser = {
-    commandFromString(command) {
+const Utils = {
+    commandFromString(command, name, source) {
         if (typeof command == 'string') {
-            return { command };
+            return { command, name, source };
+        }
+        if (source)
+            command.source = source;
+        if (!command.name || (typeof command.name == 'string' && command.name.length == 0)) {
+            command.name = name;
         }
         return command;
     },
-    concurrentFromStrings(commands) {
-        if (Array.isArray(commands)) {
-            return { commands };
+    concurrentFromStrings(concurrent, name, source) {
+        if (Array.isArray(concurrent)) {
+            return { commands: concurrent, name, source };
         }
-        return commands;
-    },
-    source(c, source) {
-        c.source = source;
-    },
-    aliasesFromCommand(config, name, aliases) {
-        const _aliases = {};
-        for (const _alias of aliases) {
-            const alias = Parser.commandFromString(_alias);
-            alias.name = name + ':' + alias.name;
-            alias.command = name;
-            _aliases[alias.name] = alias;
+        if (source)
+            concurrent.source = source;
+        if (!concurrent.name || (typeof concurrent.name == 'string' && concurrent.name.length == 0)) {
+            concurrent.name = name;
         }
-        Parser.aliases(config, _aliases);
+        return concurrent;
     },
-    aliases(config, aliases) {
+    registerSubcommands(config, command, subcommands) {
+        let i = 0;
+        for (const _subcommand of subcommands) {
+            let subcommand = Utils.commandFromString(_subcommand, i.toString());
+            subcommand = Utils.mergeCommands(command, subcommand);
+            subcommand.name = command.name + ':' + subcommand.name;
+            // Register subcommand
+            Utils.registerCommand(config, subcommand);
+            i++;
+        }
+    },
+    registerAliases(config, aliases) {
         for (const key in aliases) {
-            let alias = Parser.commandFromString(aliases[key]);
+            let alias = Utils.commandFromString(aliases[key], key);
             const command = config.commands[alias.command];
             if (!command) {
                 throw new Error(`Cannot alias "${key}" with "${alias.command}"`);
             }
-            const all = object_1.merge({}, command, alias);
-            all.name = alias.name || key;
-            all.command = command.command;
-            all.args = alias.args || all.args;
-            config.commands[key] = all;
+            // Merge alias to command
+            const merged = Utils.mergeCommands(command, alias);
+            merged.command = command.command;
+            // Register alias
+            Utils.registerCommand(config, merged);
         }
+    },
+    registerCommand(config, command) {
+        config.commands[command.name] = command;
+    },
+    registerConcurrent(config, concurrent) {
+        config.concurrents[concurrent.name] = concurrent;
+    },
+    mergeCommands(...commands) {
+        let current = { name: "", command: "" };
+        for (let i = 0; i < commands.length; i++) {
+            const command = commands[i];
+            current = object_1.merge(current, command);
+            current.args = current.args || [];
+            current.args = current.args.concat(command.args || []);
+            current.dependsOn = current.dependsOn || [];
+            current.dependsOn = current.dependsOn.concat(command.dependsOn || []);
+            current.conditions = current.conditions || [];
+            current.conditions = current.conditions.concat(command.conditions || []);
+            current.subcommands = current.subcommands || [];
+            current.subcommands = current.subcommands.concat(command.subcommands || []);
+        }
+        return current;
+    },
+    mergeConcurrents(...commands) {
+        let merged = { name: "", commands: [] };
+        for (let i = 0; i < commands.length; i++) {
+            const cmd = commands[i];
+            object_1.merge(merged, cmd);
+            merged.commands = merged.commands || [];
+            merged.commands = merged.commands.concat(cmd.commands || []);
+            merged.dependsOn = merged.dependsOn || [];
+            merged.dependsOn = merged.dependsOn.concat(cmd.dependsOn || []);
+            merged.conditions = merged.conditions || [];
+            merged.conditions = merged.conditions.concat(cmd.conditions || []);
+        }
+        return merged;
     },
     conditions(c) {
         const conditions = c.conditions;

@@ -57,8 +57,7 @@ description = "Call hello and welcome"
 
 [commands.echo]
 command = "echo \${message}"
-type = "main"
-aliases = [
+subcommands = [
   { name = "world", variables = { message = "Hello World" } },
   { name = "john" , variables = { message = "Hello John"  } }
 ]
@@ -90,13 +89,6 @@ after(async () => {
 })
 
 describe("Command Line", async () => {
-
-  it("List sub aliases", async () => {
-    const [code, stdout] = await run()
-    assert.equal(true, !!stdout.match(new RegExp(`echo:john`)));
-    assert.equal(true, !!stdout.match(new RegExp(`echo:world`)));
-    assert.equal(code, 0)
-  })
 
   it("Descriptions", async () => {
     const [code, stdout] = await run()
@@ -157,6 +149,13 @@ describe("Command Line", async () => {
   it("Concurrents", async () => {
     const [code, stdout] = await run('hellos')
     assert.equal(stdout, `Hello Paul!\nHello John!\nWelcome\n`);
+    assert.equal(code, 0)
+  })
+
+  it("Subcommands", async () => {
+    const [code, stdout] = await run()
+    assert.equal(true, !!stdout.match(new RegExp(`echo:john`)));
+    assert.equal(true, !!stdout.match(new RegExp(`echo:world`)));
     assert.equal(code, 0)
   })
 

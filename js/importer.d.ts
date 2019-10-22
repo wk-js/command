@@ -10,26 +10,24 @@ export interface CommandCondition {
 }
 export interface Command {
     command: string;
-    name?: string;
+    name: string;
     source?: string;
     cwd?: string;
     binPath?: string;
     description?: string;
     visible?: boolean;
-    type?: "main";
     args?: string[];
     dependsOn?: string[];
     conditions?: CommandCondition[];
     variables?: Record<string, string>;
-    aliases?: (string | Command)[];
+    subcommands?: (string | Command)[];
 }
 export interface Concurrent {
     commands: string[];
-    name?: string;
+    name: string;
     source?: string;
     description?: string;
     visible?: boolean;
-    type?: "main";
     dependsOn?: string[];
     conditions?: CommandCondition[];
     variables?: Record<string, string>;
@@ -54,4 +52,4 @@ export declare function load_directory(path: string, config?: Config): Promise<C
 export declare function lookup(config?: Config): Promise<Config>;
 export declare function load_globals(config?: Config): Promise<Config>;
 export declare function load_package(path: string, config?: Config): Promise<Config>;
-export declare function merge_config(...configs: Config[]): Config;
+export declare function merge_config(first: Config, ...configs: Config[]): Config;
