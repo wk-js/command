@@ -16,6 +16,7 @@ export interface Command {
     binPath?: string;
     description?: string;
     visible?: boolean;
+    type?: "main";
     args?: string[];
     dependsOn?: string[];
     conditions?: CommandCondition[];
@@ -28,6 +29,7 @@ export interface Concurrent {
     source?: string;
     description?: string;
     visible?: boolean;
+    type?: "main";
     dependsOn?: string[];
     conditions?: CommandCondition[];
     variables?: Record<string, string>;

@@ -1,5 +1,5 @@
 import { isFile, fetch, readFile } from 'lol/js/node/fs'
-import { merge } from 'lol/js/object'
+import { merge, omit } from 'lol/js/object'
 import * as Path from 'path'
 import * as Fs from 'fs'
 import TOML from "toml";
@@ -25,6 +25,7 @@ export interface Command {
   binPath?: string;
   description?: string;
   visible?: boolean;
+  type?: "main";
   args?: string[];
   dependsOn?: string[];
   conditions?: CommandCondition[];
@@ -38,6 +39,7 @@ export interface Concurrent {
   source?: string;
   description?: string;
   visible?: boolean;
+  type?: "main";
   dependsOn?: string[];
   conditions?: CommandCondition[];
   variables?: Record<string, string>;
@@ -128,6 +130,9 @@ async function _load(path: string) {
     throw new Error(`Cannot parse "${path}"`)
   }
 
+  // Pool of unregistered task
+  const unregistered = []
+
   config.importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals : false
   config.importPackage = typeof file.importPackage == 'boolean' ? file.importPackage : false
 
@@ -142,8 +147,12 @@ async function _load(path: string) {
     config.commands[name] = command
 
     // Add aliases from commands
-    if (command.aliases) {      
+    if (command.aliases) {
       Parser.aliasesFromCommand(config, name, command.aliases)
+    }
+
+    if (command.type == "main") {
+      unregistered.push( name )
     }
   }
 
@@ -168,6 +177,9 @@ async function _load(path: string) {
   if (file.aliases != null) {
     Parser.aliases(config, file.aliases)
   }
+
+  config.commands = omit(config.commands, ...unregistered)
+  config.concurrents = omit(config.concurrents, ...unregistered)
 
   return config
 }
@@ -244,10 +256,10 @@ const Parser = {
     const _aliases: FileCommandAlias = {}
     for (const _alias of aliases) {
       const alias = Parser.commandFromString(_alias)
-      alias.name = name + ':' + alias.name      
+      alias.name = name + ':' + alias.name
       alias.command = name
       _aliases[alias.name] = alias
-    }    
+    }
     Parser.aliases(config, _aliases)
   },
 

@@ -91,6 +91,8 @@ function _load(path) {
         catch (e) {
             throw new Error(`Cannot parse "${path}"`);
         }
+        // Pool of unregistered task
+        const unregistered = [];
         config.importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals : false;
         config.importPackage = typeof file.importPackage == 'boolean' ? file.importPackage : false;
         // Parse commands
@@ -105,6 +107,9 @@ function _load(path) {
             // Add aliases from commands
             if (command.aliases) {
                 Parser.aliasesFromCommand(config, name, command.aliases);
+            }
+            if (command.type == "main") {
+                unregistered.push(name);
             }
         }
         // Parse concurrents
@@ -126,6 +131,8 @@ function _load(path) {
         if (file.aliases != null) {
             Parser.aliases(config, file.aliases);
         }
+        config.commands = object_1.omit(config.commands, ...unregistered);
+        config.concurrents = object_1.omit(config.concurrents, ...unregistered);
         return config;
     });
 }

@@ -57,9 +57,10 @@ description = "Call hello and welcome"
 
 [commands.echo]
 command = "echo \${message}"
+type = "main"
 aliases = [
-  { name = "world", variables = { message = "Hello World" } }, 
-  { name = "john" , variables = { message = "Hello John"  } } 
+  { name = "world", variables = { message = "Hello World" } },
+  { name = "john" , variables = { message = "Hello John"  } }
 ]
 
   `, Path.join(LOAD_PATH, 'commands.toml'))
@@ -88,11 +89,10 @@ after(async () => {
   await removeDir(LOAD_PATH)
 })
 
-describe.only("Command Line", async () => {
+describe("Command Line", async () => {
 
-  it.only("List sub aliases", async () => {
+  it("List sub aliases", async () => {
     const [code, stdout] = await run()
-    assert.equal(true, !!stdout.match(new RegExp(`echo`)));
     assert.equal(true, !!stdout.match(new RegExp(`echo:john`)));
     assert.equal(true, !!stdout.match(new RegExp(`echo:world`)));
     assert.equal(code, 0)
