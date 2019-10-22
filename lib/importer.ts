@@ -131,7 +131,8 @@ async function _load(path: string) {
   }
 
   // Pool of unregistered task
-  const unregistered = []
+  const unregisteredCommands: string[] = []
+  const unregisteredConcurrents: string[] = []
 
   config.importGlobals = typeof file.importGlobals == 'boolean' ? file.importGlobals : false
   config.importPackage = typeof file.importPackage == 'boolean' ? file.importPackage : false
@@ -143,6 +144,7 @@ async function _load(path: string) {
     if (Array.isArray(command.conditions) && !Parser.conditions(command)) {
       continue
     }
+
     const name = command.name || key
     config.commands[name] = command
 
@@ -152,7 +154,7 @@ async function _load(path: string) {
     }
 
     if (command.type == "main") {
-      unregistered.push( name )
+      unregisteredCommands.push( name )
     }
   }
 
@@ -163,7 +165,13 @@ async function _load(path: string) {
     if (Array.isArray(concurrent.conditions) && !Parser.conditions(concurrent)) {
       continue
     }
+
+    const name = concurrent.name || key
     config.concurrents[key] = concurrent
+
+    if (concurrent.type == "main") {
+      unregisteredCommands.push( name )
+    }
   }
 
   // Load extended files
@@ -178,8 +186,8 @@ async function _load(path: string) {
     Parser.aliases(config, file.aliases)
   }
 
-  config.commands = omit(config.commands, ...unregistered)
-  config.concurrents = omit(config.concurrents, ...unregistered)
+  config.commands = omit(config.commands, ...unregisteredCommands)
+  config.concurrents = omit(config.concurrents, ...unregisteredConcurrents)
 
   return config
 }
