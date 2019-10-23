@@ -220,17 +220,33 @@ export function merge_config(first: Config, ...configs: Config[]) {
 const Utils = {
 
   commandFromString(command: string|Command, name: string, source?: string) : Command {
+    let cmd: Command
+
     if (typeof command == 'string') {
-      return { command, name, source }
+      cmd = { command, name }
+    } else {
+      cmd = command
     }
 
-    if (source) command.source = source
-
-    if (!command.name || (typeof command.name == 'string' && command.name.length == 0)) {
-      command.name = name
+    // Set source
+    if (source) {
+      cmd.source = source
     }
 
-    return command
+    // Set name
+    if (!cmd.name || (typeof cmd.name == 'string' && cmd.name.length == 0)) {
+      cmd.name = name
+    }
+
+    // Split commands with args
+    if (cmd.command) {
+      const args = cmd.command.split(/\s/)
+      cmd.command = args.shift() as string
+      cmd.args = cmd.args || []
+      cmd.args.unshift(...args)
+    }
+
+    return cmd
   },
 
   concurrentFromStrings(concurrent: string[]|Concurrent, name: string, source?: string) : Concurrent {
