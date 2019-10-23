@@ -243,30 +243,14 @@ const Utils = {
     mergeCommands(...commands) {
         let current = { name: "", command: "" };
         for (let i = 0; i < commands.length; i++) {
-            const command = commands[i];
-            current = object_1.merge(current, command);
-            current.args = current.args || [];
-            current.args = current.args.concat(command.args || []);
-            current.dependsOn = current.dependsOn || [];
-            current.dependsOn = current.dependsOn.concat(command.dependsOn || []);
-            current.conditions = current.conditions || [];
-            current.conditions = current.conditions.concat(command.conditions || []);
-            current.subcommands = current.subcommands || [];
-            current.subcommands = current.subcommands.concat(command.subcommands || []);
+            current = object_1.merge(current, commands[i]);
         }
         return current;
     },
-    mergeConcurrents(...commands) {
+    mergeConcurrents(...concurrents) {
         let merged = { name: "", commands: [] };
-        for (let i = 0; i < commands.length; i++) {
-            const cmd = commands[i];
-            object_1.merge(merged, cmd);
-            merged.commands = merged.commands || [];
-            merged.commands = merged.commands.concat(cmd.commands || []);
-            merged.dependsOn = merged.dependsOn || [];
-            merged.dependsOn = merged.dependsOn.concat(cmd.dependsOn || []);
-            merged.conditions = merged.conditions || [];
-            merged.conditions = merged.conditions.concat(cmd.conditions || []);
+        for (let i = 0; i < concurrents.length; i++) {
+            object_1.merge(merged, concurrents[i]);
         }
         return merged;
     },
