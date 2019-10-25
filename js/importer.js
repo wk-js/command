@@ -166,8 +166,8 @@ function merge_config(first, ...configs) {
         if (first.importPackage != configs[i].importPackage && configs[i].importPackage) {
             first.importPackage = true;
         }
-        object_1.merge(first.commands, configs[i].commands);
-        object_1.merge(first.concurrents, configs[i].concurrents);
+        object_1.merge(first.commands, object_1.clone(configs[i].commands));
+        object_1.merge(first.concurrents, object_1.clone(configs[i].concurrents));
     }
     return first;
 }
@@ -243,14 +243,14 @@ const Utils = {
     mergeCommands(...commands) {
         let current = { name: "", command: "" };
         for (let i = 0; i < commands.length; i++) {
-            current = object_1.merge(current, commands[i]);
+            current = object_1.merge(current, object_1.clone(commands[i]));
         }
         return current;
     },
     mergeConcurrents(...concurrents) {
         let merged = { name: "", commands: [] };
         for (let i = 0; i < concurrents.length; i++) {
-            object_1.merge(merged, concurrents[i]);
+            object_1.merge(merged, object_1.clone(concurrents[i]));
         }
         return merged;
     },
@@ -269,7 +269,7 @@ const Utils = {
             }
             valid = true;
             if (condition.override != null) {
-                c = object_1.merge(c, condition.override);
+                c = object_1.merge(c, object_1.clone(condition.override));
             }
         }
         return valid;

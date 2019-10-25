@@ -1,5 +1,5 @@
 import { isFile, fetch, readFile } from 'lol/js/node/fs'
-import { merge, omit } from 'lol/js/object'
+import { merge, clone } from 'lol/js/object'
 import * as Path from 'path'
 import * as Fs from 'fs'
 import TOML from "toml";
@@ -210,8 +210,8 @@ export function merge_config(first: Config, ...configs: Config[]) {
       first.importPackage = true
     }
 
-    merge<Config>(first.commands, configs[i].commands)
-    merge<Config>(first.concurrents, configs[i].concurrents)
+    merge<Config>(first.commands, clone(configs[i].commands))
+    merge<Config>(first.concurrents, clone(configs[i].concurrents))
   }
 
   return first
@@ -307,7 +307,7 @@ const Utils = {
     let current: Command = { name: "", command: "" }
 
     for (let i = 0; i < commands.length; i++) {
-      current = merge<Command>(current, commands[i])
+      current = merge<Command>(current, clone(commands[i]))
     }
 
     return current
@@ -317,7 +317,7 @@ const Utils = {
     let merged: Concurrent = { name: "", commands: [] }
 
     for (let i = 0; i < concurrents.length; i++) {
-      merge<Concurrent>(merged, concurrents[i])
+      merge<Concurrent>(merged, clone(concurrents[i]))
     }
 
     return merged
@@ -344,7 +344,7 @@ const Utils = {
 
       valid = true
       if (condition.override != null) {
-        c = merge(c, condition.override)
+        c = merge(c, clone(condition.override))
       }
     }
 

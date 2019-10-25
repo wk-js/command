@@ -157,6 +157,10 @@ describe("Command Line", async () => {
     assert.equal(true, !!stdout.match(new RegExp(`echo:john`)));
     assert.equal(true, !!stdout.match(new RegExp(`echo:world`)));
     assert.equal(code, 0)
+    const [,stdout0] = await run('echo:john')
+    assert.equal(stdout0, `Hello John\n`);
+    const [,stdout1] = await run('echo:world')
+    assert.equal(stdout1, `Hello World\n`);
   })
 
 })
