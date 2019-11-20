@@ -269,7 +269,7 @@ const Utils = {
     for (const _subcommand of subcommands) {
       let subcommand = Utils.commandFromString(_subcommand, i.toString())
       subcommand = Utils.mergeCommands(command, subcommand)
-      subcommand.name = command.name + ':' + subcommand.name
+      // subcommand.name = command.name + ':' + subcommand.name
 
       // Register subcommand
       Utils.registerCommand(config, subcommand)
