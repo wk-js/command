@@ -2,7 +2,7 @@
   "name": "wk",
   "version": "0.0.2",
   "description": "",
-  "bin": "js/cli.js",
+  "bin": "bin/wk",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
