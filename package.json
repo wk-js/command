@@ -11,7 +11,7 @@
   "dependencies": {
     "@types/js-yaml": "^3.12.2",
     "js-yaml": "3.13.1",
-    "lol": "github:wk-js/lol.js#0.0.13"
+    "lol": "github:wk-js/lol.js#0.0.14"
   },
   "devDependencies": {
     "@types/node": "13.9.2",
