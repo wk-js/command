@@ -13,7 +13,7 @@ async function run(task, options = {}) {
             opts.cwd = options.cwd;
         console.log('>', ctx.references['WK::Command'], path_1.join(process.cwd(), opts.cwd));
         console.log('>', task, '\n');
-        if (ctx.references['WK::Debug'] !== 'true') {
+        if (!ctx.references['WK::Debug']) {
             await exec_1.exec(task, opts).promise();
         }
     }

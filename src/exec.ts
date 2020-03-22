@@ -13,7 +13,7 @@ export async function run(task: Task | string, options: CommandOptions = {}): P
     console.log('>', ctx.references['WK::Command'], join(process.cwd(), opts.cwd as string))
     console.log('>', task, '\n')
 
-    if (ctx.references['WK::Debug'] !== 'true') {
+    if (!ctx.references['WK::Debug']) {
       await exec(task, opts).promise()
     }
   } else if (task.hasOwnProperty('Exec')) {

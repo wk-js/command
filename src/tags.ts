@@ -22,7 +22,7 @@ export const TAGS = [
   'Empty',
 ]
 
-export function validate(value: any, message: string, type?: "string" | "number" | "boolean" | "object" | "array") {
+export function validate(value: any, message: string, type?: "string" | "number" | "boolean" | "object" | "array") {
   let valid = true
   if (type) {
     if (type === 'array') {
@@ -49,7 +49,12 @@ export function has_key(data: any, key: string) {
   return data !== null && typeof data === 'object' && Object.keys(data).length === 1 && data.hasOwnProperty(key)
 }
 
-export function Any(data: Types.TagValue | Types.TagCondition | Types.TagSequence): Types.Scalar | Types.Scalar[] {
+export function Any(data: Types.TagValue | Types.TagCondition | Types.TagSequence): Types.Scalar | Types.Scalar[] {
+  if (typeof data !== 'object') {
+    if (SCALAR_REG.test(typeof data)) return data
+    return ''
+  }
+
   if (Array.isArray(data)) {
     return data.map(d => Scalar(d))
   }
@@ -111,6 +116,11 @@ export function Scalar(data: Types.TagValue | Types.TagCondition): Types.Scalar 
 }
 
 export function Sequence(data: Types.TagSequence): Types.Scalar[] {
+  if (typeof data !== 'object') {
+    if (SCALAR_REG.test(typeof data)) return [data]
+    return []
+  }
+
   const key = get_key(data)
 
   switch (key) {
@@ -136,7 +146,7 @@ export function Split({ Split: [delimiter, value] }: Types.Tags['Split']): Types
   return (v as string).split(d as string)
 }
 
-export function Value(data: Types.TagValue): string|boolean {
+export function Value(data: Types.TagValue): string | boolean {
   const key = get_key(data)
 
   switch (key) {

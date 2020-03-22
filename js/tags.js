@@ -48,6 +48,11 @@ function has_key(data, key) {
 }
 exports.has_key = has_key;
 function Any(data) {
+    if (typeof data !== 'object') {
+        if (SCALAR_REG.test(typeof data))
+            return data;
+        return '';
+    }
     if (Array.isArray(data)) {
         return data.map(d => Scalar(d));
     }
@@ -102,6 +107,11 @@ function Scalar(data) {
 }
 exports.Scalar = Scalar;
 function Sequence(data) {
+    if (typeof data !== 'object') {
+        if (SCALAR_REG.test(typeof data))
+            return [data];
+        return [];
+    }
     const key = get_key(data);
     switch (key) {
         case "Split":
