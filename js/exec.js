@@ -31,14 +31,14 @@ async function run(task, options = {}) {
 exports.run = run;
 async function serie(task) {
     for (let i = 0; i < task.Serie.length; i++) {
-        await run(task.Serie[i]);
+        await run(task.Serie[i], { name: task.Options.name });
     }
 }
 exports.serie = serie;
 async function parallel(task) {
     const promises = [];
     for (let i = 0; i < task.Parallel.length; i++) {
-        promises.push(run(task.Parallel[i]));
+        promises.push(run(task.Parallel[i], { name: task.Options.name }));
     }
     return Promise.all(promises);
 }

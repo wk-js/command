@@ -19,10 +19,8 @@ export function create_task(name: string, commands: Commands): Task {
       const key = get_key(task)
 
       if (key === 'None') {
-        Options = {
-          ...Options,
-          ...(task as unknown as CommandOptions)
-        }
+        Options = task as CommandOptions
+        Options.name = name
         continue
       }
     }

@@ -14,7 +14,8 @@ function create_task(name, commands) {
         if (type === 'object') {
             const key = tags_1.get_key(task);
             if (key === 'None') {
-                Options = Object.assign(Object.assign({}, Options), task);
+                Options = task;
+                Options.name = name;
                 continue;
             }
         }

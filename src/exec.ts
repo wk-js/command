@@ -28,14 +28,14 @@ export async function run(task: Task | string, options: CommandOptions = {}): P
 
 export async function serie(task: TaskSerie) {
   for (let i = 0; i < task.Serie.length; i++) {
-    await run(task.Serie[i])
+    await run(task.Serie[i], { name: task.Options.name })
   }
 }
 
 export async function parallel(task: TaskParallel) {
   const promises: Promise<any>[] = []
   for (let i = 0; i < task.Parallel.length; i++) {
-    promises.push(run(task.Parallel[i]))
+    promises.push(run(task.Parallel[i], { name: task.Options.name }))
   }
 
   return Promise.all(promises)
