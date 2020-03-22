@@ -8,7 +8,7 @@ const ARG_REG = /^arg(\d+|s)$/
 export function create_task(name: string, commands: Commands): Task {
   const { references } = Context.current()
   const tasks: string[] = commands[name]
-  let Options: CommandOptions = {}
+  let Options: CommandOptions = { name }
 
   const items = []
 
@@ -19,7 +19,10 @@ export function create_task(name: string, commands: Commands): Task {
       const key = get_key(task)
 
       if (key === 'None') {
-        Options = task as CommandOptions
+        Options = {
+          ...Options,
+          ...(task as unknown as CommandOptions)
+        }
         continue
       }
     }

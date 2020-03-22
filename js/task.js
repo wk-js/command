@@ -7,14 +7,14 @@ const ARG_REG = /^arg(\d+|s)$/;
 function create_task(name, commands) {
     const { references } = context_1.Context.current();
     const tasks = commands[name];
-    let Options = {};
+    let Options = { name };
     const items = [];
     for (let task of tasks) {
         const type = typeof task;
         if (type === 'object') {
             const key = tags_1.get_key(task);
             if (key === 'None') {
-                Options = task;
+                Options = Object.assign(Object.assign({}, Options), task);
                 continue;
             }
         }

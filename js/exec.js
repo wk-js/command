@@ -11,7 +11,7 @@ async function run(task, options = {}) {
         const opts = { color: true, stdio: 'inherit', cwd: './' };
         if (options.cwd)
             opts.cwd = options.cwd;
-        console.log('>', ctx.references['WK::Command'], path_1.join(process.cwd(), opts.cwd));
+        console.log('>', options.name, path_1.join(process.cwd(), opts.cwd));
         console.log('>', task, '\n');
         if (!ctx.references['WK::Debug']) {
             await exec_1.exec(task, opts).promise();

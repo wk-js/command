@@ -10,7 +10,7 @@ export async function run(task: Task | string, options: CommandOptions = {}): P
     const ctx = Context.current()
     const opts: ExecOptions = { color: true, stdio: 'inherit', cwd: './' }
     if (options.cwd) opts.cwd = options.cwd
-    console.log('>', ctx.references['WK::Command'], join(process.cwd(), opts.cwd as string))
+    console.log('>', options.name, join(process.cwd(), opts.cwd as string))
     console.log('>', task, '\n')
 
     if (!ctx.references['WK::Debug']) {

@@ -22,6 +22,7 @@ export interface CommandOptions {
   descargs?: string
   cwd?: string
   parallel?: boolean
+  name?: string
 }
 
 export type Commands = {
