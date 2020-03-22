@@ -1,0 +1,28 @@
+variables:
+  env: !If
+    - !Empty [ !Ref NODE_ENV ]
+    - develop
+    - !Ref NODE_ENV
+  webpack: !If
+    - !Equals [ !Ref WK::Command, server ]
+    - webpack-dev-server
+    - webpack
+commands:
+  config:
+    - npx tsc -p config/tsconfig.json
+    - desc: Compile configuration
+  build:
+    - config
+    - !Sub npx ${webpack} --config tmp/build.js --env.environment=${env} ${args}
+    - desc: Build with webpack
+      descargs: '[--watch]'
+  build_zip:
+    - !Sub build --env.zip ${args}
+    - desc: Build zip with webpack
+      descargs: '[--watch]'
+  server:
+    - build
+    - desc: Run dev server
+  task:
+    - config
+    - node tmp/tasks.js
