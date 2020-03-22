@@ -1,4 +1,4 @@
-import { TagCondition, TagValue, Tags, Scalar, TagSequence } from "./types"
+import * as Types from "./types"
 import { template2 } from 'lol/js/string/template'
 import { Context } from "./context"
 
@@ -36,10 +36,10 @@ export function validate(value: any, message: string, type?: "string" | "number
   if (!valid) throw message
 }
 
-export function get_key(data: TagValue | TagCondition | TagSequence): keyof Tags {
+export function get_key(data: Types.TagValue | Types.TagCondition | Types.TagSequence): keyof Types.Tags {
   const keys = Object.keys(data)
   if (keys.length === 1 && TAGS.indexOf(keys[0]) > -1) {
-    const k = keys[0] as keyof Tags
+    const k = keys[0] as keyof Types.Tags
     return k
   }
   return 'None'
@@ -49,7 +49,7 @@ export function has_key(data: any, key: string) {
   return data !== null && typeof data === 'object' && Object.keys(data).length === 1 && data.hasOwnProperty(key)
 }
 
-export function Any(data: TagValue | TagCondition | TagSequence): Scalar | Scalar[] {
+export function Any(data: Types.TagValue | Types.TagCondition | Types.TagSequence): Types.Scalar | Types.Scalar[] {
   if (Array.isArray(data)) {
     return data.map(d => Scalar(d))
   }
@@ -72,14 +72,14 @@ export function Any(data: TagValue | TagCondition | TagSequence): Scalar | Sca
       }
 
     case "Split": {
-      return Sequence(data as TagSequence)
+      return Sequence(data as Types.TagSequence)
     }
   }
 
   return ''
 }
 
-export function Scalar(data: TagValue | TagCondition): Scalar {
+export function Scalar(data: Types.TagValue | Types.TagCondition): Types.Scalar {
   if (typeof data !== 'object') {
     if (SCALAR_REG.test(typeof data)) return data
     return ''
@@ -93,7 +93,7 @@ export function Scalar(data: TagValue | TagCondition): Scalar {
     case "Select":
     case "Sub":
       {
-        return Value(data as TagValue)
+        return Value(data as Types.TagValue)
       }
 
     case "Equals":
@@ -103,27 +103,27 @@ export function Scalar(data: TagValue | TagCondition): Scalar {
     case "Not":
     case "Empty":
       {
-        return Condition(data as TagCondition)
+        return Condition(data as Types.TagCondition)
       }
   }
 
   return ''
 }
 
-export function Sequence(data: TagSequence): Scalar[] {
+export function Sequence(data: Types.TagSequence): Types.Scalar[] {
   const key = get_key(data)
 
   switch (key) {
     case "Split":
       {
-        return Split(data as Tags['Split'])
+        return Split(data as Types.Tags['Split'])
       }
   }
 
   return []
 }
 
-export function Split({ Split: [delimiter, value] }: Tags['Split']): Scalar[] {
+export function Split({ Split: [delimiter, value] }: Types.Tags['Split']): Types.Scalar[] {
   validate(delimiter, '[!Split] Invalid delimiter')
   validate(value, '[!Split] Invalid value')
 
@@ -136,28 +136,28 @@ export function Split({ Split: [delimiter, value] }: Tags['Split']): Scalar[] {
   return (v as string).split(d as string)
 }
 
-export function Value(data: TagValue): string|boolean {
+export function Value(data: Types.TagValue): string|boolean {
   const key = get_key(data)
 
   switch (key) {
     case "If": {
-      return If(data as Tags['If'])
+      return If(data as Types.Tags['If'])
     }
     case "Ref": {
-      return Ref(data as Tags['Ref'])
+      return Ref(data as Types.Tags['Ref'])
     }
     case "Select": {
-      return Select(data as Tags['Select'])
+      return Select(data as Types.Tags['Select'])
     }
     case "Sub": {
-      return Sub(data as Tags['Sub'])
+      return Sub(data as Types.Tags['Sub'])
     }
   }
 
   return ''
 }
 
-export function If({ If: [condition, v0, v1] }: Tags['If']): Scalar {
+export function If({ If: [condition, v0, v1] }: Types.Tags['If']): Types.Scalar {
   validate(condition, '[!If] Invalid condition')
   validate(v0, '[!If] Invalid then')
   validate(v1, '[!If] Invalid else')
@@ -169,7 +169,7 @@ export function If({ If: [condition, v0, v1] }: Tags['If']): Scalar {
   return Scalar(v1)
 }
 
-export function Ref({ Ref }: Tags['Ref']): Scalar {
+export function Ref({ Ref }: Types.Tags['Ref']): Types.Scalar {
   validate(Ref, '[!Ref] Invalid reference key', 'string')
 
   const { references } = Context.current()
@@ -179,7 +179,7 @@ export function Ref({ Ref }: Tags['Ref']): Scalar {
   return value || ''
 }
 
-export function Select({ Select: [index, values] }: Tags['Select']): Scalar {
+export function Select({ Select: [index, values] }: Types.Tags['Select']): Types.Scalar {
   validate(index, '[!Select] Invalid index', 'number')
   validate(index, '[!Select] Invalid values', 'array')
 
@@ -189,7 +189,7 @@ export function Select({ Select: [index, values] }: Tags['Select']): Scalar {
   return Scalar(value)
 }
 
-export function Sub({ Sub }: Tags['Sub']): Scalar {
+export function Sub({ Sub }: Types.Tags['Sub']): Types.Scalar {
   const { references } = Context.current()
 
   if (Array.isArray(Sub)) {
@@ -197,7 +197,7 @@ export function Sub({ Sub }: Tags['Sub']): Scalar {
     validate(Sub[1], '[!Sub] Invalid map', 'object')
 
     const str = Scalar(Sub[0])
-    const vars: Record<string, Scalar> = {}
+    const vars: Record<string, Types.Scalar> = {}
     for (const key in Sub[1]) {
       if (Sub[1].hasOwnProperty(key)) {
         const value = Sub[1][key]
@@ -214,46 +214,46 @@ export function Sub({ Sub }: Tags['Sub']): Scalar {
   return template2(str as string, references)
 }
 
-export function Condition(data: TagCondition): Scalar {
+export function Condition(data: Types.TagCondition): Types.Scalar {
   const key = Object.keys(data)[0] as keyof typeof TAGS
 
   switch (key) {
     case "Equals": {
-      return Equals(data as Tags['Equals'])
+      return Equals(data as Types.Tags['Equals'])
     }
     case "DeepEquals": {
-      return DeepEquals(data as Tags['DeepEquals'])
+      return DeepEquals(data as Types.Tags['DeepEquals'])
     }
     case "And": {
-      return And(data as Tags['And'])
+      return And(data as Types.Tags['And'])
     }
     case "Or": {
-      return Or(data as Tags['Or'])
+      return Or(data as Types.Tags['Or'])
     }
     case "Not": {
-      return Not(data as Tags['Not'])
+      return Not(data as Types.Tags['Not'])
     }
     case "Empty": {
-      return Empty(data as Tags['Empty'])
+      return Empty(data as Types.Tags['Empty'])
     }
   }
 
   return false
 }
 
-export function Equals({ Equals: [v0, v1] }: Tags['Equals']): boolean {
+export function Equals({ Equals: [v0, v1] }: Types.Tags['Equals']): boolean {
   validate(v0, '[!Equals] Invalid v0')
   validate(v1, '[!Equals] Invalid v1')
   return Any(v0) === Any(v1)
 }
 
-export function DeepEquals({ DeepEquals: [v0, v1] }: Tags['DeepEquals']): boolean {
+export function DeepEquals({ DeepEquals: [v0, v1] }: Types.Tags['DeepEquals']): boolean {
   validate(v0, '[!DeepEquals] Invalid v0')
   validate(v1, '[!DeepEquals] Invalid v1')
   return JSON.stringify(Any(v0)) === JSON.stringify(Any(v1))
 }
 
-export function And({ And }: Tags['And']): boolean {
+export function And({ And }: Types.Tags['And']): boolean {
   validate(And, '[!And] Invalid array', 'array')
 
   for (const condition of And) {
@@ -263,7 +263,7 @@ export function And({ And }: Tags['And']): boolean {
   return true
 }
 
-export function Or({ Or }: Tags['Or']): boolean {
+export function Or({ Or }: Types.Tags['Or']): boolean {
   validate(Or, '[!Or] Invalid array', 'array')
 
   for (const condition of Or) {
@@ -273,13 +273,13 @@ export function Or({ Or }: Tags['Or']): boolean {
   return false
 }
 
-export function Not({ Not }: Tags['Not']): boolean {
+export function Not({ Not }: Types.Tags['Not']): boolean {
   validate(Or, '[!Not] Invalid value')
   const b = Scalar(Not)
   return !b
 }
 
-export function Empty({ Empty }: Tags['Empty']): boolean {
+export function Empty({ Empty }: Types.Tags['Empty']): boolean {
   validate(Empty, '[!Empty] Invalid value', 'array')
 
   const value = Scalar(Empty[0])

@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const types_1 = require("./types");
 const template_1 = require("lol/js/string/template");
 const context_1 = require("./context");
 const SCALAR_REG = /string|boolean|number/i;
@@ -50,7 +49,7 @@ function has_key(data, key) {
 exports.has_key = has_key;
 function Any(data) {
     if (Array.isArray(data)) {
-        return data.map(d => types_1.Scalar(d));
+        return data.map(d => Scalar(d));
     }
     const key = get_key(data);
     switch (key) {
@@ -65,7 +64,7 @@ function Any(data) {
         case "Not":
         case "Empty":
             {
-                return types_1.Scalar(data);
+                return Scalar(data);
             }
         case "Split": {
             return Sequence(data);
@@ -116,8 +115,8 @@ exports.Sequence = Sequence;
 function Split({ Split: [delimiter, value] }) {
     validate(delimiter, '[!Split] Invalid delimiter');
     validate(value, '[!Split] Invalid value');
-    const d = types_1.Scalar(delimiter);
-    const v = types_1.Scalar(value);
+    const d = Scalar(delimiter);
+    const v = Scalar(value);
     validate(d, '[!Split] Invalid delimiter', 'string');
     validate(v, '[!Split] Invalid value', 'string');
     return v.split(d);
@@ -146,10 +145,10 @@ function If({ If: [condition, v0, v1] }) {
     validate(condition, '[!If] Invalid condition');
     validate(v0, '[!If] Invalid then');
     validate(v1, '[!If] Invalid else');
-    if (types_1.Scalar(condition)) {
-        return types_1.Scalar(v0);
+    if (Scalar(condition)) {
+        return Scalar(v0);
     }
-    return types_1.Scalar(v1);
+    return Scalar(v1);
 }
 exports.If = If;
 function Ref({ Ref }) {
@@ -165,7 +164,7 @@ function Select({ Select: [index, values] }) {
     validate(index, '[!Select] Invalid values', 'array');
     const value = values[index];
     validate(value, '[!Select] Index out of bounds');
-    return types_1.Scalar(value);
+    return Scalar(value);
 }
 exports.Select = Select;
 function Sub({ Sub }) {
@@ -173,19 +172,19 @@ function Sub({ Sub }) {
     if (Array.isArray(Sub)) {
         validate(Sub[0], `[!Sub] Invalid value "${Sub[0]}"`);
         validate(Sub[1], '[!Sub] Invalid map', 'object');
-        const str = types_1.Scalar(Sub[0]);
+        const str = Scalar(Sub[0]);
         const vars = {};
         for (const key in Sub[1]) {
             if (Sub[1].hasOwnProperty(key)) {
                 const value = Sub[1][key];
-                vars[key] = types_1.Scalar(value);
+                vars[key] = Scalar(value);
             }
         }
         validate(str, `[!Sub] Invalid value "${str}"`, 'string');
         return template_1.template2(str, Object.assign({}, references, vars));
     }
     validate(Sub, `[!Sub] Invalid value "${Sub}"`);
-    const str = types_1.Scalar(Sub);
+    const str = Scalar(Sub);
     validate(str, `[!Sub] Invalid value "${str}"`, 'string');
     return template_1.template2(str, references);
 }
@@ -231,7 +230,7 @@ function And({ And }) {
     validate(And, '[!And] Invalid array', 'array');
     for (const condition of And) {
         validate(And, '[!And] Invalid condition');
-        if (!types_1.Scalar(condition))
+        if (!Scalar(condition))
             return false;
     }
     return true;
@@ -241,7 +240,7 @@ function Or({ Or }) {
     validate(Or, '[!Or] Invalid array', 'array');
     for (const condition of Or) {
         validate(Or, '[!Or] Invalid condition');
-        if (types_1.Scalar(condition))
+        if (Scalar(condition))
             return true;
     }
     return false;
@@ -249,13 +248,13 @@ function Or({ Or }) {
 exports.Or = Or;
 function Not({ Not }) {
     validate(Or, '[!Not] Invalid value');
-    const b = types_1.Scalar(Not);
+    const b = Scalar(Not);
     return !b;
 }
 exports.Not = Not;
 function Empty({ Empty }) {
     validate(Empty, '[!Empty] Invalid value', 'array');
-    const value = types_1.Scalar(Empty[0]);
+    const value = Scalar(Empty[0]);
     if (typeof value === 'string' || Array.isArray(value)) {
         return value.length === 0;
     }
