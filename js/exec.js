@@ -11,6 +11,10 @@ async function run(task, options = {}) {
         const opts = { color: true, stdio: 'inherit', cwd: './' };
         if (options.cwd)
             opts.cwd = options.cwd;
+        if (options.env) {
+            opts.env = options.env;
+            opts.extendEnv = true;
+        }
         console.log('>', options.name, path_1.join(process.cwd(), opts.cwd));
         console.log('>', task, '\n');
         if (!ctx.references['WK::Debug']) {

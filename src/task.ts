@@ -1,7 +1,7 @@
 import { Commands, CommandOptions, Task } from "./types";
 import { pad } from "lol/js/string";
 import { Context } from "./context";
-import { Any, get_key } from "./tags";
+import { Any, get_key, Scalar } from "./tags";
 
 const ARG_REG = /^arg(\d+|s)$/
 
@@ -21,6 +21,15 @@ export function create_task(name: string, commands: Commands): Task {
       if (key === 'None') {
         Options = task as CommandOptions
         Options.name = name
+
+        let env: Record<string, string|boolean> = {}
+        if (Options.env) {
+          Object.entries(Options.env).forEach(([key, value]) => {
+            env[key] = Scalar(value)
+          })
+        }
+        Options.env = env
+
         continue
       }
     }

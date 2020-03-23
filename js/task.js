@@ -16,6 +16,13 @@ function create_task(name, commands) {
             if (key === 'None') {
                 Options = task;
                 Options.name = name;
+                let env = {};
+                if (Options.env) {
+                    Object.entries(Options.env).forEach(([key, value]) => {
+                        env[key] = tags_1.Scalar(value);
+                    });
+                }
+                Options.env = env;
                 continue;
             }
         }

@@ -9,7 +9,13 @@ export async function run(task: Task | string, options: CommandOptions = {}): P
 
     const ctx = Context.current()
     const opts: ExecOptions = { color: true, stdio: 'inherit', cwd: './' }
+
     if (options.cwd) opts.cwd = options.cwd
+    if (options.env) {
+      opts.env = options.env as any
+      opts.extendEnv = true
+    }
+
     console.log('>', options.name, join(process.cwd(), opts.cwd as string))
     console.log('>', task, '\n')
 

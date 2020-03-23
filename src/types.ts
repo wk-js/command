@@ -1,4 +1,4 @@
-export type TagValue = Tags['If'] | Tags['Ref'] | Tags['Select'] | Tags['Split'] | Tags['Sub'] | string
+export type TagValue = Tags['If'] | Tags['Ref'] | Tags['Select'] | Tags['Split'] | Tags['Sub'] | string | boolean
 export type TagCondition = Tags['Equals'] | Tags['DeepEquals'] | Tags['And'] | Tags['Or'] | Tags['Not'] | Tags['Empty'] | boolean
 export type TagSequence = Tags['Split'] | Scalar[]
 
@@ -23,6 +23,7 @@ export interface CommandOptions {
   cwd?: string
   parallel?: boolean
   name?: string
+  env?: Record<string, TagValue>
 }
 
 export type Commands = {
