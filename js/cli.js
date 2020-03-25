@@ -7,8 +7,19 @@ const context_1 = require("./context");
 const argv_1 = require("./argv");
 const path_1 = require("path");
 let VERBOSE = false;
+function getOptions() {
+    let _wk_argv = [];
+    let _argv = process.argv.slice(2);
+    let [, tmp] = argv_1.parse(process.argv.slice(2));
+    const index = _argv.indexOf(tmp[0]);
+    if (tmp[0] && index > -1) {
+        _wk_argv = _argv.splice(0, index);
+    }
+    let [wk] = argv_1.parse(_wk_argv);
+    return [wk, _argv];
+}
 async function main() {
-    let [options, argv] = argv_1.parse(process.argv.slice(2));
+    let [options, argv] = getOptions();
     const path = options.commands;
     VERBOSE = !!options.verbose;
     let refs = Object.assign({}, process.env);

@@ -8,8 +8,20 @@ import { join } from "path"
 
 let VERBOSE = false
 
+function getOptions(): [WKOptions, string[]] {
+  let _wk_argv: string[] = []
+  let _argv = process.argv.slice(2)
+  let [, tmp] = parse(process.argv.slice(2))
+  const index = _argv.indexOf(tmp[0])
+  if (tmp[0] && index > -1) {
+    _wk_argv = _argv.splice(0, index)
+  }
+  let [wk] = parse(_wk_argv)
+  return [wk, _argv]
+}
+
 async function main() {
-  let [options, argv] = parse(process.argv.slice(2))
+  let [options, argv] = getOptions()
 
   const path = options.commands
   VERBOSE = !!options.verbose
