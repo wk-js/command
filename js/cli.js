@@ -10,13 +10,20 @@ let VERBOSE = false;
 function getOptions() {
     let _wk_argv = [];
     let _argv = process.argv.slice(2);
-    let [, tmp] = argv_1.parse(process.argv.slice(2));
+    let [wk0, tmp] = argv_1.parse(process.argv.slice(2));
     const index = _argv.indexOf(tmp[0]);
     if (tmp[0] && index > -1) {
         _wk_argv = _argv.splice(0, index);
+        let [wk1] = argv_1.parse(_wk_argv);
+        return [wk1, _argv];
     }
-    let [wk] = argv_1.parse(_wk_argv);
-    return [wk, _argv];
+    return [wk0, []];
+}
+function setOptions(refs, options) {
+    refs["WK::Verbose"] = options.verbose;
+    refs["WK::Debug"] = options.debug;
+    refs["WK::NoColor"] = options.nocolor;
+    refs["WK::CommandPath"] = path_1.join(process.cwd(), options.commands);
 }
 async function main() {
     let [options, argv] = getOptions();
@@ -25,22 +32,21 @@ async function main() {
     let refs = Object.assign({}, process.env);
     refs["WK::Command"] = argv.shift() || '';
     refs["WK::Args"] = argv.join(' ');
-    refs["WK::Verbose"] = options.verbose;
-    refs["WK::Debug"] = options.debug;
-    refs["WK::CommandPath"] = path_1.join(process.cwd(), options.commands);
+    setOptions(refs, options);
     argv.forEach((a, i) => refs[`WK::Arg${i + 1}`] = a);
     const ctx = context_1.Context.create();
     ctx.references = refs;
     context_1.Context.push(ctx);
-    const [variables, commands] = yaml_1.parse_file(path);
+    const [variables, commands, config] = yaml_1.parse_file(path);
+    setOptions(refs, Object.assign(options, config));
     if (!refs["WK::Command"] || !commands[refs["WK::Command"]]) {
         task_1.help(commands);
     }
     else {
-        ctx.references['command'] = refs["WK::Command"];
-        ctx.references["args"] = refs["WK::Args"];
-        argv.forEach((a, i) => ctx.references[`arg${i + 1}`] = a);
-        ctx.references = Object.assign(Object.assign({}, ctx.references), variables);
+        refs['command'] = refs["WK::Command"];
+        refs["args"] = refs["WK::Args"];
+        argv.forEach((a, i) => refs[`arg${i + 1}`] = a);
+        ctx.references = Object.assign(refs, variables);
         const task = task_1.create_task(refs["WK::Command"], commands);
         await exec_1.run(task);
     }

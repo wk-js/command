@@ -1,11 +1,13 @@
 import * as YAML from 'js-yaml';
 import { readFileSync } from 'fs';
-import { TagValue, Commands } from './types';
+import { TagValue, Commands, WKOptions } from './types';
 import * as Tags from './tags'
+import { omit } from 'lol/js/object'
 
 const TAG_KINDS: ['sequence', 'scalar', 'mapping'] = [ 'sequence', 'scalar', 'mapping' ]
 const COMMANDS_REG = /^commands:$/
 const VARIABLES_REG = /^variables:$/
+const CONFIG_REG = /^config:$/
 const LINEBREAK_REG = /\n/
 
 export function create_schema(json = false) {
@@ -41,7 +43,7 @@ export function parse(content: string, json = false) {
   return YAML.safeLoad(content, { schema })
 }
 
-export function parse_file(path: string): [Record<string, string>, Commands] {
+export function parse_file(path: string): [Record<string, string>, Commands, Partial<WKOptions>] {
   const content = readFileSync(path, { encoding: 'utf-8' })
 
   const lines = content.split(LINEBREAK_REG)
@@ -49,18 +51,38 @@ export function parse_file(path: string): [Record<string, string>, Commands] {
   let current_block: string[] = []
   let commands_block: string[] = []
   let variables_block: string[] = []
+  let config_block: string[] = []
 
   lines.forEach(line => {
     if (COMMANDS_REG.test(line)) {
       current_block = commands_block
     } else if (VARIABLES_REG.test(line)) {
       current_block = variables_block
+    } else if (CONFIG_REG.test(line)) {
+      current_block = config_block
     }
 
     current_block.push(line)
   })
 
-  const { variables } = parse(variables_block.join('\n'))
-  const { commands }  = parse(commands_block.join('\n'), true)
-  return [variables, commands]
+  let variables: Record<string, string> = {}
+  let commands: Commands = {}
+  let config: Partial<WKOptions> = {}
+
+  if (variables_block.length > 0) {
+    const p0 = parse(variables_block.join('\n'))
+    variables = Object.assign(variables, p0.variables)
+  }
+
+  if (commands_block.length > 0) {
+    const p0 = parse(commands_block.join('\n'), true)
+    commands = Object.assign(commands, p0.commands)
+  }
+
+  if (config_block.length > 0) {
+    const p0 = parse(config_block.join('\n'))
+    config = Object.assign(config, omit(p0.config, 'commands'))
+  }
+
+  return [variables, commands, config]
 }

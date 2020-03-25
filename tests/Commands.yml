@@ -1,3 +1,11 @@
+config:
+  nocolor: !If
+    - !Or
+      - !Empty [ !Ref NODE_ENV ]
+      - !Equals [ !Ref NODE_ENV, development ]
+    - false
+    - true
+  debug: true
 variables:
   env: !If
     - !Empty [ !Ref NODE_ENV ]

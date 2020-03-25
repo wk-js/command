@@ -10,9 +10,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const YAML = __importStar(require("js-yaml"));
 const fs_1 = require("fs");
 const Tags = __importStar(require("./tags"));
+const object_1 = require("lol/js/object");
 const TAG_KINDS = ['sequence', 'scalar', 'mapping'];
 const COMMANDS_REG = /^commands:$/;
 const VARIABLES_REG = /^variables:$/;
+const CONFIG_REG = /^config:$/;
 const LINEBREAK_REG = /\n/;
 function create_schema(json = false) {
     const explicit = [];
@@ -52,6 +54,7 @@ function parse_file(path) {
     let current_block = [];
     let commands_block = [];
     let variables_block = [];
+    let config_block = [];
     lines.forEach(line => {
         if (COMMANDS_REG.test(line)) {
             current_block = commands_block;
@@ -59,10 +62,26 @@ function parse_file(path) {
         else if (VARIABLES_REG.test(line)) {
             current_block = variables_block;
         }
+        else if (CONFIG_REG.test(line)) {
+            current_block = config_block;
+        }
         current_block.push(line);
     });
-    const { variables } = parse(variables_block.join('\n'));
-    const { commands } = parse(commands_block.join('\n'), true);
-    return [variables, commands];
+    let variables = {};
+    let commands = {};
+    let config = {};
+    if (variables_block.length > 0) {
+        const p0 = parse(variables_block.join('\n'));
+        variables = Object.assign(variables, p0.variables);
+    }
+    if (commands_block.length > 0) {
+        const p0 = parse(commands_block.join('\n'), true);
+        commands = Object.assign(commands, p0.commands);
+    }
+    if (config_block.length > 0) {
+        const p0 = parse(config_block.join('\n'));
+        config = Object.assign(config, object_1.omit(p0.config, 'commands'));
+    }
+    return [variables, commands, config];
 }
 exports.parse_file = parse_file;

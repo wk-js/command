@@ -3,12 +3,12 @@ import { ExecOptions, exec } from 'lol/js/node/exec';
 import { join } from 'path';
 import { Context } from "./context";
 
-export async function run(task: Task | string, options: CommandOptions = {}): Promise<void> {
+export async function run(task: Task | string, options: CommandOptions = {}): Promise<void> {
   if (typeof task === 'string') {
     if (task.length === 0) return
 
     const ctx = Context.current()
-    const opts: ExecOptions = { color: true, stdio: 'inherit', cwd: './' }
+    const opts: ExecOptions = { color: !ctx.references['WK::NoColor'], stdio: 'inherit', cwd: './' }
 
     if (options.cwd) opts.cwd = options.cwd
     if (options.env) {

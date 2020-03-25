@@ -39,6 +39,7 @@ export type WKOptions = {
   commands: string
   verbose: boolean
   debug: boolean
+  nocolor: boolean
 }
 
 export type Scalar = string | boolean

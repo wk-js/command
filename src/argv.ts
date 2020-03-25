@@ -1,6 +1,7 @@
 import { WKOptions } from "./types"
 
 const WK_REG = /^--wk\./
+const PARAM_REG = /^-{1,2}/
 const EQUAL_REG = /=/
 
 export function parse(argv: string[]): [WKOptions, string[]] {
@@ -9,6 +10,7 @@ export function parse(argv: string[]): [WKOptions, string[]] {
     commands: 'Commands.yml',
     verbose: false,
     debug: false,
+    nocolor: false,
   }
 
   for (let i = 0; i < argv.length; i++) {
@@ -22,6 +24,12 @@ export function parse(argv: string[]): [WKOptions, string[]] {
         case "debug":
           {
             _wk.debug = true
+            break
+          }
+
+        case "nocolor":
+          {
+            _wk.nocolor = true
             break
           }
 

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const WK_REG = /^--wk\./;
+const PARAM_REG = /^-{1,2}/;
 const EQUAL_REG = /=/;
 function parse(argv) {
     const _argv = [];
@@ -8,6 +9,7 @@ function parse(argv) {
         commands: 'Commands.yml',
         verbose: false,
         debug: false,
+        nocolor: false,
     };
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
@@ -18,6 +20,11 @@ function parse(argv) {
                 case "debug":
                     {
                         _wk.debug = true;
+                        break;
+                    }
+                case "nocolor":
+                    {
+                        _wk.nocolor = true;
                         break;
                     }
                 case "verbose":

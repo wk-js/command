@@ -67,5 +67,6 @@ export declare type WKOptions = {
     commands: string;
     verbose: boolean;
     debug: boolean;
+    nocolor: boolean;
 };
 export declare type Scalar = string | boolean;

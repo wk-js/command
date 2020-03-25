@@ -8,7 +8,7 @@ async function run(task, options = {}) {
         if (task.length === 0)
             return;
         const ctx = context_1.Context.current();
-        const opts = { color: true, stdio: 'inherit', cwd: './' };
+        const opts = { color: !ctx.references['WK::NoColor'], stdio: 'inherit', cwd: './' };
         if (options.cwd)
             opts.cwd = options.cwd;
         if (options.env) {

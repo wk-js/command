@@ -11,13 +11,23 @@ let VERBOSE = false
 function getOptions(): [WKOptions, string[]] {
   let _wk_argv: string[] = []
   let _argv = process.argv.slice(2)
-  let [, tmp] = parse(process.argv.slice(2))
+  let [wk0, tmp] = parse(process.argv.slice(2))
+
   const index = _argv.indexOf(tmp[0])
   if (tmp[0] && index > -1) {
     _wk_argv = _argv.splice(0, index)
+    let [wk1] = parse(_wk_argv)
+    return [wk1, _argv]
   }
-  let [wk] = parse(_wk_argv)
-  return [wk, _argv]
+
+  return [wk0, []]
+}
+
+function setOptions(refs: Record<string, string|boolean>, options: WKOptions) {
+  refs["WK::Verbose"] = options.verbose
+  refs["WK::Debug"] = options.debug
+  refs["WK::NoColor"] = options.nocolor
+  refs["WK::CommandPath"] = join(process.cwd(), options.commands)
 }
 
 async function main() {
@@ -29,27 +39,23 @@ async function main() {
   let refs: Record<string, string|boolean> = Object.assign({}, process.env as Record<string, string>)
   refs["WK::Command"] = argv.shift() || ''
   refs["WK::Args"] = argv.join(' ')
-  refs["WK::Verbose"] = options.verbose
-  refs["WK::Debug"] = options.debug
-  refs["WK::CommandPath"] = join(process.cwd(), options.commands)
+  setOptions(refs, options)
   argv.forEach((a, i) => refs[`WK::Arg${i+1}`] = a)
 
   const ctx = Context.create()
   ctx.references = refs
   Context.push(ctx)
-  const [variables, commands] = parse_file(path)
+  const [variables, commands, config] = parse_file(path)
+  setOptions(refs, Object.assign(options, config))
 
   if (!refs["WK::Command"] || !commands[refs["WK::Command"]]) {
     help(commands)
   } else {
-    ctx.references['command'] = refs["WK::Command"]
-    ctx.references["args"] = refs["WK::Args"]
-    argv.forEach((a, i) => ctx.references[`arg${i+1}`] = a)
+    refs['command'] = refs["WK::Command"]
+    refs["args"] = refs["WK::Args"]
+    argv.forEach((a, i) => refs[`arg${i+1}`] = a)
 
-    ctx.references = {
-      ...ctx.references,
-      ...variables,
-    }
+    ctx.references = Object.assign(refs, variables)
 
     const task = create_task(refs["WK::Command"], commands)
     await run(task)
