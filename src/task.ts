@@ -89,6 +89,8 @@ export function help(commands: Commands) {
   const lengths: number[] = []
   const desc: Record<string, CommandOptions> = {}
   Object.keys(commands).forEach(key => {
+    if (key[0] === '_') return
+
     for (const task of commands[key]) {
       if (typeof task === 'object') {
         if (get_key(task) !== 'None') continue

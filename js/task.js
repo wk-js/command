@@ -74,6 +74,8 @@ function help(commands) {
     const lengths = [];
     const desc = {};
     Object.keys(commands).forEach(key => {
+        if (key[0] === '_')
+            return;
         for (const task of commands[key]) {
             if (typeof task === 'object') {
                 if (tags_1.get_key(task) !== 'None')
