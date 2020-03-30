@@ -8,7 +8,7 @@ const TAG_KINDS: ['sequence', 'scalar', 'mapping'] = [ 'sequence', 'scalar', 'ma
 const COMMANDS_REG = /^commands:$/
 const VARIABLES_REG = /^variables:$/
 const CONFIG_REG = /^config:$/
-const LINEBREAK_REG = /\n/
+const LINEBREAK_REG = /\n|\r\n/
 
 export function create_schema(json = false) {
   const explicit: YAML.Type[] = []
