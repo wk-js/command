@@ -3,11 +3,14 @@
     "target": "es2017",
     "moduleResolution": "Node",
     "module": "CommonJS",
-    "rootDir": "./src",
+    "rootDir": "src",
     "outDir": "./js",
     "declaration": true,
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
-  }
+  },
+  "include": [
+    "src"
+  ]
 }

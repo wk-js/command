@@ -8,7 +8,7 @@ export async function run(task: Task | string, options: CommandOptions = {}): Pr
     if (task.length === 0) return
 
     const ctx = Context.current()
-    const opts: ExecOptions = { color: !ctx.references['WK::NoColor'], stdio: 'inherit', cwd: './' }
+    const opts: ExecOptions = { color: !ctx.variables['WK::NoColor'], stdio: 'inherit', cwd: './' }
 
     if (options.cwd) opts.cwd = options.cwd
     if (options.env) {
@@ -19,7 +19,7 @@ export async function run(task: Task | string, options: CommandOptions = {}): Pr
     console.log('>', options.name, join(process.cwd(), opts.cwd as string))
     console.log('>', task, '\n')
 
-    if (!ctx.references['WK::Debug']) {
+    if (!ctx.variables['WK::Debug']) {
       await exec(task, opts).promise()
     }
   } else if (task.hasOwnProperty('Exec')) {

@@ -1,0 +1,81 @@
+# Override wk config
+config:
+  nocolor: !If
+    - !Or
+      - !Empty [ !Ref NODE_ENV ]
+      - !Equals [ !Ref NODE_ENV, development ]
+    - false
+    - true
+
+# Shared variables
+variables:
+  env: !Ref NODE_ENV
+  build_env: !If
+    - !Empty [ !Ref NODE_ENV ]
+    - development
+    - release
+  target: !If
+    - !Equals [ !Ref WK::Command, tool ]
+    - tool
+    - experience
+
+# List of commands
+commands:
+  start:
+    - !Sub _xrun ${arg1}
+    - desc: Run extension for development
+  config:
+    - !Sub npx tsc -p config/tsconfig.json ${args}
+    - desc: Compile configuration
+  build:
+    - config
+    - !Sub npx webpack --config tmp/build.js --env.target=${target} --env.environment=${build_env} ${args}
+    - desc: Build with webpack
+      descargs: "[--watch]"
+  build_zip:
+    - !Sub rm -rf build/${target}
+    - !Sub build --env.zip ${args}
+    - desc: Build zip with webpack
+      descargs: "[--watch]"
+  _webext: # Hidden
+    - !Sub npx web-ext ${args} --source-dir build/${target}
+  xbuild:
+    - build
+    - _webext build
+    - desc: Create extension package
+  xlint:
+    - _webext lint
+    - desc: Validate extension source
+  xsign:
+    - !Sub _webext sign --api-key=${WEB_EXT_API_KEY} --api-secret=${WEB_EXT_API_SECRET} --id=${WEB_EXT_ID} --channel=${WEB_EXT_CHANNEL}
+    - desc: Sign extension for Firefox
+  task:
+    - !Sub node tmp/tasks.js ${args}
+  bump:
+    - task bump
+  bump:patch:
+    - task bump patch
+  fetch_profiles:
+    - task fetch_profiles
+  locale:
+    - task preset
+    - task locale
+  publish:
+    - task publish
+  _xrun: # Hidden
+    - !Sub
+      - _webext run -t ${target} --start-url http://localhost:3000 --browser-console
+      - target: !If
+        - !Equals [ !Ref arg1, firefox ]
+        - firefox-desktop
+        - chromium
+    - desc: Run on chrome|firefox
+      descargs: "[target=chromium|firefox-desktop]"
+      parallel: true
+  tool:
+    - !Sub ${args}
+    - desc: Run any task with "target=tool"
+      descargs: "[task]"
+  packer:
+    - npm start
+    - cwd: tools/packer

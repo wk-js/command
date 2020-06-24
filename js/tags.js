@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Regex = exports.Empty = exports.Not = exports.Or = exports.And = exports.DeepEquals = exports.Equals = exports.Condition = exports.Sub = exports.Select = exports.Ref = exports.If = exports.Value = exports.Split = exports.Sequence = exports.Scalar = exports.Any = exports.has_key = exports.get_key = exports.validate = exports.TAGS = void 0;
 const template_1 = require("lol/js/string/template");
 const context_1 = require("./context");
 const SCALAR_REG = /string|boolean|number/i;
@@ -18,6 +19,7 @@ exports.TAGS = [
     'Or',
     'Not',
     'Empty',
+    'Regex',
 ];
 function validate(value, message, type) {
     let valid = true;
@@ -68,6 +70,7 @@ function Any(data) {
         case "Or":
         case "Not":
         case "Empty":
+        case "Regex":
             {
                 return Scalar(data);
             }
@@ -99,6 +102,7 @@ function Scalar(data) {
         case "Or":
         case "Not":
         case "Empty":
+        case "Regex":
             {
                 return Condition(data);
             }
@@ -163,7 +167,7 @@ function If({ If: [condition, v0, v1] }) {
 exports.If = If;
 function Ref({ Ref }) {
     validate(Ref, '[!Ref] Invalid reference key', 'string');
-    const { references } = context_1.Context.current();
+    const { variables: references } = context_1.Context.current();
     const value = references[Ref];
     // validate(value, `[!Ref] Reference ${Ref} does not exist`)
     return value || '';
@@ -178,7 +182,7 @@ function Select({ Select: [index, values] }) {
 }
 exports.Select = Select;
 function Sub({ Sub }) {
-    const { references } = context_1.Context.current();
+    const { variables: references } = context_1.Context.current();
     if (Array.isArray(Sub)) {
         validate(Sub[0], `[!Sub] Invalid value "${Sub[0]}"`);
         validate(Sub[1], '[!Sub] Invalid map', 'object');
@@ -220,6 +224,9 @@ function Condition(data) {
         case "Empty": {
             return Empty(data);
         }
+        case "Regex": {
+            return Regex(data);
+        }
     }
     return false;
 }
@@ -239,7 +246,7 @@ exports.DeepEquals = DeepEquals;
 function And({ And }) {
     validate(And, '[!And] Invalid array', 'array');
     for (const condition of And) {
-        validate(And, '[!And] Invalid condition');
+        validate(condition, '[!And] Invalid condition', 'boolean');
         if (!Scalar(condition))
             return false;
     }
@@ -249,7 +256,7 @@ exports.And = And;
 function Or({ Or }) {
     validate(Or, '[!Or] Invalid array', 'array');
     for (const condition of Or) {
-        validate(Or, '[!Or] Invalid condition');
+        validate(condition, '[!Or] Invalid condition', 'boolean');
         if (Scalar(condition))
             return true;
     }
@@ -257,8 +264,8 @@ function Or({ Or }) {
 }
 exports.Or = Or;
 function Not({ Not }) {
-    validate(Or, '[!Not] Invalid value');
-    const b = Scalar(Not);
+    validate(Not, '[!Not] Invalid value', 'array');
+    const b = Scalar(Not[0]);
     return !b;
 }
 exports.Not = Not;
@@ -271,3 +278,12 @@ function Empty({ Empty }) {
     throw `[!Empty] Invalid value to check "${value}"`;
 }
 exports.Empty = Empty;
+function Regex({ Regex: [v0, v1] }) {
+    validate(v0, '[!Regex] Invalid v0');
+    validate(v1, '[!Regex] Invalid v1', "string");
+    const value = Any(v0).toString();
+    const reg_str = v1.split('/');
+    const reg = new RegExp(reg_str[1], reg_str[2]);
+    return reg.test(value);
+}
+exports.Regex = Regex;

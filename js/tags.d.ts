@@ -7,7 +7,7 @@ export declare function Any(data: Types.TagValue | Types.TagCondition | Types.Ta
 export declare function Scalar(data: Types.TagValue | Types.TagCondition): Types.Scalar;
 export declare function Sequence(data: Types.TagSequence): Types.Scalar[];
 export declare function Split({ Split: [delimiter, value] }: Types.Tags['Split']): Types.Scalar[];
-export declare function Value(data: Types.TagValue): string | boolean;
+export declare function Value(data: Types.TagValue): Types.Scalar;
 export declare function If({ If: [condition, v0, v1] }: Types.Tags['If']): Types.Scalar;
 export declare function Ref({ Ref }: Types.Tags['Ref']): Types.Scalar;
 export declare function Select({ Select: [index, values] }: Types.Tags['Select']): Types.Scalar;
@@ -19,3 +19,4 @@ export declare function And({ And }: Types.Tags['And']): boolean;
 export declare function Or({ Or }: Types.Tags['Or']): boolean;
 export declare function Not({ Not }: Types.Tags['Not']): boolean;
 export declare function Empty({ Empty }: Types.Tags['Empty']): boolean;
+export declare function Regex({ Regex: [v0, v1] }: Types.Tags['Regex']): boolean;

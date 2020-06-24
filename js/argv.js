@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.parse = void 0;
 const WK_REG = /^--wk\./;
 const PARAM_REG = /^-{1,2}/;
 const EQUAL_REG = /=/;

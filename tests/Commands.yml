@@ -1,36 +1,67 @@
+# Override wk config
 config:
-  nocolor: !If
-    - !Or
-      - !Empty [ !Ref NODE_ENV ]
-      - !Equals [ !Ref NODE_ENV, development ]
-    - false
-    - true
+  nocolor: !Not [ !Or [
+    !Empty [ !Ref NODE_ENV ],
+    !Equals [ !Ref NODE_ENV, development ],
+  ] ]
   debug: true
+
+# Shared variables
 variables:
-  env: !If
+  webext_target: !If
+    - !Regex [ !Ref WK::Command, /tool:?/ ]
+    - tool
+    - experience
+  build_env: !If
     - !Empty [ !Ref NODE_ENV ]
-    - develop
-    - !Ref NODE_ENV
-  webpack: !If
-    - !Equals [ !Ref WK::Command, server ]
-    - webpack-dev-server
-    - webpack
+    - development
+    - release
+
+# List of commands
 commands:
-  config:
-    - npx tsc -p config/tsconfig.json
-    - desc: Compile configuration
-  build:
-    - config
-    - !Sub npx ${webpack} --config tmp/build.js --env.environment=${env} ${args}
-    - desc: Build with webpack
-      descargs: '[--watch]'
-  build_zip:
-    - !Sub build --env.zip ${args}
-    - desc: Build zip with webpack
-      descargs: '[--watch]'
-  server:
-    - build
-    - desc: Run dev server
+  start:
+    default: ${commands.xt.run.chrome}
+    firefox: ${commands.xt.run.firefox}
+  tool:
+    default: ${commands.xt.run.chrome}
+    firefox: ${commands.xt.run.firefox}
+  packer: cd tools/packer && npm start
+  config: npx tsc -p config/tsconfig.json
   task:
-    - config
-    - node tmp/tasks.js
+    _default: node tmp/tasks.js
+    locale: >-
+      ${commands.task} locale
+      && ${commands.task} preset
+    publish: ${commands.task} publish
+    bump:
+      default: ${commands.task} bump
+      patch: ${commands.task.bump} patch
+    fetch_profiles: ${commands.task} fetch_profiles
+  xt:
+    lint: npx web-ext lint --source-dir build/${variables.webext_target}
+    run:
+      _default: >-
+        npx web-ext run
+        --start-url http://localhost:3000
+        --browser-console
+        --source-dir build/${variables.webext_target}
+      firefox: ${commands.xt.run} -t firefox-desktop
+      chrome: ${commands.xt.run} -t chromium
+    sign: >-
+      npx web-ext sign
+      --api-key=$WEB_EXT_API_KEY
+      --api-secret=$WEB_EXT_API_SECRET
+      --id=$WEB_EXT_ID
+      --channel=$WEB_EXT_CHANNEL
+      --source-dir build/${variables.webext_target}
+    build: >-
+      ${commands.build} && npx web-ext build
+      --source-dir build/${variables.webext_target}
+  build:
+    default: >-
+      ${commands.config}
+      && npx webpack
+      --config tmp/build.js
+      --env.target=${variables.build_env}
+      --env.environment=${variables.build_env}
+    zip: rm -rf build/${variables.webext_target} && ${commands.build} --env.zip

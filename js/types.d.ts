@@ -1,5 +1,5 @@
 export declare type TagValue = Tags['If'] | Tags['Ref'] | Tags['Select'] | Tags['Split'] | Tags['Sub'] | string | boolean;
-export declare type TagCondition = Tags['Equals'] | Tags['DeepEquals'] | Tags['And'] | Tags['Or'] | Tags['Not'] | Tags['Empty'] | boolean;
+export declare type TagCondition = Tags['Equals'] | Tags['DeepEquals'] | Tags['And'] | Tags['Or'] | Tags['Not'] | Tags['Empty'] | Tags['Regex'] | boolean;
 export declare type TagSequence = Tags['Split'] | Scalar[];
 export declare type Tags = {
     If: {
@@ -20,6 +20,9 @@ export declare type Tags = {
     Equals: {
         Equals: [TagValue, TagValue];
     };
+    Regex: {
+        Regex: [TagValue, TagValue];
+    };
     DeepEquals: {
         DeepEquals: [TagValue, TagValue];
     };
@@ -30,7 +33,7 @@ export declare type Tags = {
         Or: TagCondition[];
     };
     Not: {
-        Not: TagCondition;
+        Not: [TagCondition];
     };
     Empty: {
         Empty: [TagValue];
@@ -43,12 +46,18 @@ export interface CommandOptions {
     desc?: string;
     descargs?: string;
     cwd?: string;
-    parallel?: boolean;
     name?: string;
     env?: Record<string, TagValue>;
+    variables?: Record<string, TagValue>;
+}
+export declare type Command = string | [string, CommandOptions];
+export interface Command2 extends Record<string, Commands2> {
 }
 export declare type Commands = {
-    [key: string]: string[];
+    [key: string]: Command;
+};
+export declare type Commands2 = {
+    [key: string]: string;
 };
 export declare type Task = TaskSerie | TaskParallel | TaskExec | string;
 export declare type TaskExec = {
@@ -68,5 +77,7 @@ export declare type WKOptions = {
     verbose: boolean;
     debug: boolean;
     nocolor: boolean;
+    command?: string;
+    argv?: string;
 };
 export declare type Scalar = string | boolean;

@@ -1,6 +1,18 @@
+import { deep_clone, merge } from "lol/js/object"
+import { TagValue, WKOptions } from "./types"
+import { Any } from "./tags"
+
 export class Context {
 
-  references: Record<string, string|boolean> = {}
+  variables: Record<string, string|boolean> = {}
+  args: string[] = []
+  private static _global: Record<string, string|boolean> = {}
+  static options: WKOptions = {
+    commands: 'Commands.yml',
+    debug: false,
+    nocolor: false,
+    verbose: false,
+  }
 
   private constructor() {}
 
@@ -27,7 +39,34 @@ export class Context {
   }
 
   static create() {
-    return new Context()
+    const c = new Context()
+    c.variables = deep_clone(Context._global)
+    return c
+  }
+
+  static global(key: string, value?: string|boolean) {
+    if (value) {
+      Context._global[key] = value
+    }
+    return Context._global[key]
+  }
+
+  var(key: string, value?: string|boolean) {
+    if (value) {
+      this.variables[key] = value
+    }
+    return this.variables[key]
+  }
+
+  vars(v?: Record<string, TagValue>) {
+    if (v) {
+      const vv: Record<string, string|boolean> = {}
+      for (const key in v) {
+        vv[key] = Any(v[key]) as string | boolean
+      }
+      merge(this.variables, vv)
+    }
+    return this.variables
   }
 
 }

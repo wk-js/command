@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.parallel = exports.serie = exports.run = void 0;
 const exec_1 = require("lol/js/node/exec");
 const path_1 = require("path");
 const context_1 = require("./context");
@@ -8,7 +9,7 @@ async function run(task, options = {}) {
         if (task.length === 0)
             return;
         const ctx = context_1.Context.current();
-        const opts = { color: !ctx.references['WK::NoColor'], stdio: 'inherit', cwd: './' };
+        const opts = { color: !ctx.variables['WK::NoColor'], stdio: 'inherit', cwd: './' };
         if (options.cwd)
             opts.cwd = options.cwd;
         if (options.env) {
@@ -17,7 +18,7 @@ async function run(task, options = {}) {
         }
         console.log('>', options.name, path_1.join(process.cwd(), opts.cwd));
         console.log('>', task, '\n');
-        if (!ctx.references['WK::Debug']) {
+        if (!ctx.variables['WK::Debug']) {
             await exec_1.exec(task, opts).promise();
         }
     }

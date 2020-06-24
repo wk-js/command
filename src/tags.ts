@@ -20,6 +20,7 @@ export const TAGS = [
   'Or',
   'Not',
   'Empty',
+  'Regex',
 ]
 
 export function validate(value: any, message: string, type?: "string" | "number" | "boolean" | "object" | "array") {
@@ -72,6 +73,7 @@ export function Any(data: Types.TagValue | Types.TagCondition | Types.TagSequenc
     case "Or":
     case "Not":
     case "Empty":
+    case "Regex":
       {
         return Scalar(data)
       }
@@ -107,6 +109,7 @@ export function Scalar(data: Types.TagValue | Types.TagCondition): Types.Scalar 
     case "Or":
     case "Not":
     case "Empty":
+    case "Regex":
       {
         return Condition(data as Types.TagCondition)
       }
@@ -146,7 +149,7 @@ export function Split({ Split: [delimiter, value] }: Types.Tags['Split']): Types
   return (v as string).split(d as string)
 }
 
-export function Value(data: Types.TagValue): string | boolean {
+export function Value(data: Types.TagValue): Types.Scalar {
   const key = get_key(data)
 
   switch (key) {
@@ -182,7 +185,7 @@ export function If({ If: [condition, v0, v1] }: Types.Tags['If']): Types.Scalar 
 export function Ref({ Ref }: Types.Tags['Ref']): Types.Scalar {
   validate(Ref, '[!Ref] Invalid reference key', 'string')
 
-  const { references } = Context.current()
+  const { variables: references } = Context.current()
   const value = references[Ref]
   // validate(value, `[!Ref] Reference ${Ref} does not exist`)
 
@@ -200,7 +203,7 @@ export function Select({ Select: [index, values] }: Types.Tags['Select']): Types
 }
 
 export function Sub({ Sub }: Types.Tags['Sub']): Types.Scalar {
-  const { references } = Context.current()
+  const { variables: references } = Context.current()
 
   if (Array.isArray(Sub)) {
     validate(Sub[0], `[!Sub] Invalid value "${Sub[0]}"`)
@@ -225,7 +228,7 @@ export function Sub({ Sub }: Types.Tags['Sub']): Types.Scalar {
 }
 
 export function Condition(data: Types.TagCondition): Types.Scalar {
-  const key = Object.keys(data)[0] as keyof typeof TAGS
+  const key = Object.keys(data)[0] as keyof Types.Tags
 
   switch (key) {
     case "Equals": {
@@ -245,6 +248,9 @@ export function Condition(data: Types.TagCondition): Types.Scalar {
     }
     case "Empty": {
       return Empty(data as Types.Tags['Empty'])
+    }
+    case "Regex": {
+      return Regex(data as Types.Tags['Regex'])
     }
   }
 
@@ -267,7 +273,7 @@ export function And({ And }: Types.Tags['And']): boolean {
   validate(And, '[!And] Invalid array', 'array')
 
   for (const condition of And) {
-    validate(And, '[!And] Invalid condition')
+    validate(condition, '[!And] Invalid condition', 'boolean')
     if (!Scalar(condition)) return false
   }
   return true
@@ -277,15 +283,15 @@ export function Or({ Or }: Types.Tags['Or']): boolean {
   validate(Or, '[!Or] Invalid array', 'array')
 
   for (const condition of Or) {
-    validate(Or, '[!Or] Invalid condition')
+    validate(condition, '[!Or] Invalid condition', 'boolean')
     if (Scalar(condition)) return true
   }
   return false
 }
 
 export function Not({ Not }: Types.Tags['Not']): boolean {
-  validate(Or, '[!Not] Invalid value')
-  const b = Scalar(Not)
+  validate(Not, '[!Not] Invalid value' , 'array')
+  const b = Scalar(Not[0])
   return !b
 }
 
@@ -298,4 +304,13 @@ export function Empty({ Empty }: Types.Tags['Empty']): boolean {
   }
 
   throw `[!Empty] Invalid value to check "${value}"`
+}
+
+export function Regex({ Regex: [v0, v1] }: Types.Tags['Regex']): boolean {
+  validate(v0, '[!Regex] Invalid v0')
+  validate(v1, '[!Regex] Invalid v1', "string")
+  const value = Any(v0).toString()
+  const reg_str = (v1 as string).split('/')
+  const reg = new RegExp(reg_str[1], reg_str[2])
+  return reg.test(value)
 }
