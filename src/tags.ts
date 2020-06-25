@@ -185,7 +185,7 @@ export function If({ If: [condition, v0, v1] }: Types.Tags['If']): Types.Scalar 
 export function Ref({ Ref }: Types.Tags['Ref']): Types.Scalar {
   validate(Ref, '[!Ref] Invalid reference key', 'string')
 
-  const { variables: references } = Context.current()
+  const { variables: references } = Context.export()
   const value = references[Ref]
   // validate(value, `[!Ref] Reference ${Ref} does not exist`)
 
@@ -203,7 +203,7 @@ export function Select({ Select: [index, values] }: Types.Tags['Select']): Types
 }
 
 export function Sub({ Sub }: Types.Tags['Sub']): Types.Scalar {
-  const { variables: references } = Context.current()
+  const { variables: references } = Context.export()
 
   if (Array.isArray(Sub)) {
     validate(Sub[0], `[!Sub] Invalid value "${Sub[0]}"`)

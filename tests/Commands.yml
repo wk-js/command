@@ -4,12 +4,12 @@ config:
     !Empty [ !Ref NODE_ENV ],
     !Equals [ !Ref NODE_ENV, development ],
   ] ]
-  debug: true
+  debug: false
 
 # Shared variables
 variables:
   webext_target: !If
-    - !Regex [ !Ref WK::Command, /tool:?/ ]
+    - !Regex [ !Ref command, /tool.?/ ]
     - tool
     - experience
   build_env: !If

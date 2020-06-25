@@ -7,7 +7,7 @@ export async function run(task: Task | string, options: CommandOptions = {}): Pr
   if (typeof task === 'string') {
     if (task.length === 0) return
 
-    const ctx = Context.current()
+    const ctx = Context.export()
     const opts: ExecOptions = { color: !ctx.variables['WK::NoColor'], stdio: 'inherit', cwd: './' }
 
     if (options.cwd) opts.cwd = options.cwd

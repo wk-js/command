@@ -24,79 +24,34 @@ const task_1 = require("./task");
 const context_1 = require("./context");
 const WK = __importStar(require("./wk"));
 const object_1 = require("lol/js/object");
+const child_process_1 = require("child_process");
 let VERBOSE = false;
-// function getOptions(): [WKOptions, string[]] {
-//   let _wk_argv: string[] = []
-//   let _argv = process.argv.slice(2)
-//   let [wk0, tmp] = parse(process.argv.slice(2))
-//   const index = _argv.indexOf(tmp[0])
-//   if (tmp[0] && index > -1) {
-//     _wk_argv = _argv.splice(0, index)
-//     let [wk1] = parse(_wk_argv)
-//     return [wk1, _argv]
-//   }
-//   return [wk0, []]
-// }
-// function setOptions(options: WKOptions) {
-//   Context.global("wk::verbose", options.verbose)
-//   Context.global("wk::debug", options.debug)
-//   Context.global("wk::nocolor", options.nocolor)
-//   Context.global("wk::commandpath", join(process.cwd(), options.commands))
-// }
 async function main() {
     var _a;
     // Parse ARGV
     const { wk, variables } = WK.parse('wk ' + process.argv.slice(2).join(' '));
-    Object.assign(context_1.Context.options, wk);
+    Object.assign(context_1.Context.configs, wk);
     // Resolve
     const argv = (_a = wk.argv) === null || _a === void 0 ? void 0 : _a.split(' ');
     const command = argv === null || argv === void 0 ? void 0 : argv.shift();
-    context_1.Context.global("WK::Command", command);
+    context_1.Context.var("command", command);
     // Parse file
-    Object.keys(process.env).forEach(k => context_1.Context.global(k, process.env[k]));
-    context_1.Context.push(context_1.Context.create());
-    const [global, commands, config] = yaml_1.parse_file(wk.commands);
-    context_1.Context.pop();
-    Object.keys(global).forEach(k => context_1.Context.global(k, global[k]));
-    Object.assign(context_1.Context.options, config);
+    context_1.Context.envs(process.env);
+    const [vars, commands, config, env] = yaml_1.parse_file(wk.commands);
+    context_1.Context.vars(vars);
+    context_1.Context.envs(env);
+    context_1.Context.configs(config);
     const cmds = task_1.format_commands(object_1.flat(commands));
     if (!task_1.exists(command, cmds)) {
         task_1.help2(cmds);
     }
     else {
-        const ctx = context_1.Context.create();
-        ctx.args = argv || [];
-        Object.keys(variables).forEach(k => ctx.var(k, variables[k]));
-        context_1.Context.push(ctx);
         const task = task_1.create_task2(command, cmds);
-        console.log(task);
-        context_1.Context.pop();
-        //   console.log(WK.render(task.Exec as string))
+        if (!context_1.Context.config("debug")) {
+            console.log(`\n> ${task}\n`);
+            child_process_1.spawnSync(task, { shell: true, stdio: 'inherit', env: context_1.Context.envs() });
+        }
     }
-    // let [options, argv] = getOptions()
-    // const path = options.commands
-    // VERBOSE = !!options.verbose
-    // Context.global("wk::command", argv.shift())
-    // argv.forEach((a,i) => Context.global(`wk::arg${i}`, a))
-    // setOptions(options)
-    // Context.push(Context.create())
-    // const [variables, commands, config] = parse_file(path)
-    // setOptions(Object.assign(options, config))
-    // Object.keys(variables).forEach(k => Context.global(k, variables[k]))
-    // Context.pop()
-    // if (!Context.global("wk::command") || !commands[Context.global("wk::command") as string]) {
-    //   help(commands)
-    // } else {
-    //   const ctx = Context.create()
-    //   ctx.args = argv
-    //   // ctx.merge_variables(variables)
-    //   Context.push(ctx)
-    //   const task = create_task(Context.global("wk::command") as string, commands)
-    //   Context.pop()
-    //   // @ts-ignore
-    //   console.log(WK.parse(task.Exec));
-    // //   await run(task)
-    // }
 }
 main()
     .catch(e => {

@@ -167,7 +167,7 @@ function If({ If: [condition, v0, v1] }) {
 exports.If = If;
 function Ref({ Ref }) {
     validate(Ref, '[!Ref] Invalid reference key', 'string');
-    const { variables: references } = context_1.Context.current();
+    const { variables: references } = context_1.Context.export();
     const value = references[Ref];
     // validate(value, `[!Ref] Reference ${Ref} does not exist`)
     return value || '';
@@ -182,7 +182,7 @@ function Select({ Select: [index, values] }) {
 }
 exports.Select = Select;
 function Sub({ Sub }) {
-    const { variables: references } = context_1.Context.current();
+    const { variables: references } = context_1.Context.export();
     if (Array.isArray(Sub)) {
         validate(Sub[0], `[!Sub] Invalid value "${Sub[0]}"`);
         validate(Sub[1], '[!Sub] Invalid map', 'object');

@@ -28,6 +28,7 @@ const TAG_KINDS = ['sequence', 'scalar', 'mapping'];
 const COMMANDS_REG = /^commands:$/;
 const VARIABLES_REG = /^variables:$/;
 const CONFIG_REG = /^config:$/;
+const ENV_REG = /^env:$/;
 const LINEBREAK_REG = /\n|\r\n/;
 function create_schema(json = false) {
     const explicit = [];
@@ -68,6 +69,7 @@ function parse_file(path) {
     let commands_block = [];
     let variables_block = [];
     let config_block = [];
+    let env_block = [];
     lines.forEach(line => {
         if (COMMANDS_REG.test(line)) {
             current_block = commands_block;
@@ -78,14 +80,22 @@ function parse_file(path) {
         else if (CONFIG_REG.test(line)) {
             current_block = config_block;
         }
+        else if (ENV_REG.test(line)) {
+            current_block = env_block;
+        }
         current_block.push(line);
     });
     let variables = {};
     let commands = {};
     let config = {};
+    let env = {};
     if (variables_block.length > 0) {
         const p0 = parse(variables_block.join('\n'));
         variables = Object.assign(variables, p0.variables);
+    }
+    if (env_block.length > 0) {
+        const p0 = parse(env_block.join('\n'));
+        env = Object.assign(env, p0.env);
     }
     if (commands_block.length > 0) {
         const p0 = parse(commands_block.join('\n'), true);
@@ -95,6 +105,6 @@ function parse_file(path) {
         const p0 = parse(config_block.join('\n'));
         config = Object.assign(config, object_1.omit(p0.config, 'commands'));
     }
-    return [variables, commands, config];
+    return [variables, commands, config, env];
 }
 exports.parse_file = parse_file;

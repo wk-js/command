@@ -8,6 +8,7 @@ const TAG_KINDS: ['sequence', 'scalar', 'mapping'] = [ 'sequence', 'scalar', 'ma
 const COMMANDS_REG = /^commands:$/
 const VARIABLES_REG = /^variables:$/
 const CONFIG_REG = /^config:$/
+const ENV_REG = /^env:$/
 const LINEBREAK_REG = /\n|\r\n/
 
 export function create_schema(json = false) {
@@ -43,7 +44,7 @@ export function parse(content: string, json = false) {
   return YAML.safeLoad(content, { schema })
 }
 
-export function parse_file(path: string): [Record<string, string>, Commands, Partial<WKOptions>] {
+export function parse_file(path: string): [Record<string, string>, Commands, Partial<WKOptions>, Record<string, string>] {
   const content = readFileSync(path, { encoding: 'utf-8' })
 
   const lines = content.split(LINEBREAK_REG)
@@ -52,6 +53,7 @@ export function parse_file(path: string): [Record<string, string>, Commands, Par
   let commands_block: string[] = []
   let variables_block: string[] = []
   let config_block: string[] = []
+  let env_block: string[] = []
 
   lines.forEach(line => {
     if (COMMANDS_REG.test(line)) {
@@ -60,6 +62,8 @@ export function parse_file(path: string): [Record<string, string>, Commands, Par
       current_block = variables_block
     } else if (CONFIG_REG.test(line)) {
       current_block = config_block
+    } else if (ENV_REG.test(line)) {
+      current_block = env_block
     }
 
     current_block.push(line)
@@ -68,10 +72,16 @@ export function parse_file(path: string): [Record<string, string>, Commands, Par
   let variables: Record<string, string> = {}
   let commands: Commands = {}
   let config: Partial<WKOptions> = {}
+  let env: Record<string, string> = {}
 
   if (variables_block.length > 0) {
     const p0 = parse(variables_block.join('\n'))
     variables = Object.assign(variables, p0.variables)
+  }
+
+  if (env_block.length > 0) {
+    const p0 = parse(env_block.join('\n'))
+    env = Object.assign(env, p0.env)
   }
 
   if (commands_block.length > 0) {
@@ -84,5 +94,5 @@ export function parse_file(path: string): [Record<string, string>, Commands, Par
     config = Object.assign(config, omit(p0.config, 'commands'))
   }
 
-  return [variables, commands, config]
+  return [variables, commands, config, env]
 }

@@ -8,7 +8,7 @@ async function run(task, options = {}) {
     if (typeof task === 'string') {
         if (task.length === 0)
             return;
-        const ctx = context_1.Context.current();
+        const ctx = context_1.Context.export();
         const opts = { color: !ctx.variables['WK::NoColor'], stdio: 'inherit', cwd: './' };
         if (options.cwd)
             opts.cwd = options.cwd;
