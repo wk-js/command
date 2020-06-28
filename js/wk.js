@@ -19,94 +19,90 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.render = exports.parse = void 0;
+exports.parse = exports.convert = void 0;
 const Parser = __importStar(require("lol/js/object/argv"));
-const WK_REG = /^--wk:/;
-const EXCEPTION_REG = /^--wk$/;
+const ALL_REG = /^--(var|env|wk)\./;
+const VAR_REG = /^--var\./;
+const ENV_REG = /^--env\./;
+const CONFIG_REG = /^--wk\./;
+const PARAM_REG = /^-{1,2}/;
 const EQUAL_REG = /=/;
-function is_exception(arg) {
-    return EXCEPTION_REG.test(arg);
+function convert(o) {
+    for (const key in o) {
+        const value = o[key];
+        if (value === "false") {
+            o[key] = false;
+        }
+        else if (value === "true") {
+            o[key] = true;
+        }
+        else if (typeof value === "string" && !isNaN(parseFloat(value))) {
+            o[key] = parseFloat(value);
+        }
+    }
+    return o;
 }
+exports.convert = convert;
 function parse(cmd) {
     const options = {
         commands: 'Commands.yml',
         verbose: false,
         debug: false,
         nocolor: false,
+        command: '',
+        argv: []
     };
     const variables = {};
+    const env = {};
     const argv = cmd.trim().split(' ');
+    options.argv = argv.slice(1);
     if (argv[0] !== 'wk')
-        return { wk: options, variables };
-    const args = [];
+        return { wk: options, variables, env };
+    const wk_args = [];
+    const var_args = [];
+    const env_args = [];
     const parameters = argv.slice(1);
     let last_index = 0;
     for (let i = 0; i < parameters.length; i++) {
         const arg = parameters[i];
         let [key, value] = arg.split(EQUAL_REG);
-        if (is_exception(key)) {
-            if (!value && parameters[i + 1] && !WK_REG.test(parameters[i + 1])) {
+        if (ALL_REG.test(key)) {
+            if (!value && parameters[i + 1] && !PARAM_REG.test(parameters[i + 1])) {
                 value = parameters[i + 1];
                 i++;
             }
-            args.push(`--wk::${value}`);
+            let arr = wk_args;
+            if (CONFIG_REG.test(key)) {
+                key = key.replace(CONFIG_REG, '--');
+                arr = wk_args;
+            }
+            else if (VAR_REG.test(key)) {
+                key = key.replace(VAR_REG, '--');
+                arr = var_args;
+            }
+            else if (ENV_REG.test(key)) {
+                key = key.replace(ENV_REG, '--');
+                arr = env_args;
+            }
+            if (!value) {
+                arr.push(key);
+            }
+            else {
+                arr.push(key, value);
+            }
             continue;
         }
-        if (!WK_REG.test(key)) {
-            last_index = i;
-            break;
-        }
-        key = key.replace(WK_REG, '--');
-        if (!value && parameters[i + 1] && !WK_REG.test(parameters[i + 1])) {
-            value = parameters[i + 1];
-            i++;
-        }
-        if (!value) {
-            args.push(key);
-        }
-        else {
-            args.push(key, value);
-        }
+        last_index = i;
+        break;
     }
-    const o = Parser.parse(args);
-    o['wk::argv'] = parameters.slice(last_index).join(' ').trim();
-    const reg = /^wk::/;
-    for (let key in o) {
-        const value = o[key];
-        if (reg.test(key)) {
-            key = key.replace(reg, '');
-            // @ts-ignore
-            options[key] = value;
-            continue;
-        }
-        if (value === "true") {
-            variables[key] = true;
-        }
-        else if (value === "false") {
-            variables[key] = false;
-        }
-        else {
-            variables[key] = o[key];
-        }
-    }
+    const o = Parser.parse(wk_args);
+    const args = parameters.slice(last_index);
+    o['command'] = args[0];
+    o['argv'] = args;
     return {
-        wk: options,
-        variables,
+        wk: Object.assign(options, o),
+        variables: convert(Parser.parse(var_args)),
+        env: convert(Parser.parse(env_args)),
     };
 }
 exports.parse = parse;
-function render(cmd) {
-    const { wk, variables } = parse(cmd);
-    let command = [`wk`];
-    if (wk.command)
-        command.push(wk.command);
-    if (wk.argv)
-        command.push(wk.argv);
-    return [
-        command.join(' '),
-        {
-            variables
-        }
-    ];
-}
-exports.render = render;

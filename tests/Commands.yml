@@ -4,7 +4,7 @@ config:
     !Empty [ !Ref NODE_ENV ],
     !Equals [ !Ref NODE_ENV, development ],
   ] ]
-  debug: false
+  debug: true
 
 # Shared variables
 variables:

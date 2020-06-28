@@ -1,28 +1,46 @@
 import * as Parser from 'lol/js/object/argv'
-import { omit, expose } from 'lol/js/object'
-import { Command, WKOptions } from './types'
+import { WKOptions, DStringBool } from './types'
 
-const WK_REG = /^--wk:/
-const EXCEPTION_REG = /^--wk$/
+const ALL_REG = /^--(var|env|wk)\./
+const VAR_REG = /^--var\./
+const ENV_REG = /^--env\./
+const CONFIG_REG = /^--wk\./
+const PARAM_REG = /^-{1,2}/
 const EQUAL_REG = /=/
 
-function is_exception(arg: string) {
-  return EXCEPTION_REG.test(arg)
+export function convert(o: Record<string, string|boolean|number>) {
+  for (const key in o) {
+    const value = o[key]
+    if (value === "false") {
+      o[key] = false
+    } else if (value === "true") {
+      o[key] = true
+    } else if (typeof value === "string" && !isNaN(parseFloat(value))) {
+      o[key] = parseFloat(value)
+    }
+  }
+  return o
 }
 
-export function parse(cmd: string): { wk: WKOptions, variables: Record<string, string|boolean> } {
+export function parse(cmd: string): { wk: WKOptions, variables: DStringBool, env: DStringBool } {
   const options: WKOptions = {
     commands: 'Commands.yml',
     verbose: false,
     debug: false,
     nocolor: false,
+    command: '',
+    argv: []
   }
   const variables: Record<string, string|boolean> = {}
+  const env: Record<string, string|boolean> = {}
 
   const argv = cmd.trim().split(' ')
-  if (argv[0] !== 'wk') return { wk: options, variables }
+  options.argv = argv.slice(1)
+  if (argv[0] !== 'wk') return { wk: options, variables, env }
 
-  const args: string[] = []
+  const wk_args: string[] = []
+  const var_args: string[] = []
+  const env_args: string[] = []
   const parameters = argv.slice(1)
   let last_index = 0
 
@@ -30,71 +48,43 @@ export function parse(cmd: string): { wk: WKOptions, variables: Record<string, s
     const arg = parameters[i];
     let [key, value] = arg.split(EQUAL_REG)
 
-    if (is_exception(key)) {
-      if (!value && parameters[i+1] && !WK_REG.test(parameters[i+1])) {
+    if (ALL_REG.test(key)) {
+      if (!value && parameters[i+1] && !PARAM_REG.test(parameters[i+1])) {
         value = parameters[i+1] as string
         i++
       }
-      args.push(`--wk::${value}`)
+
+      let arr = wk_args
+
+      if (CONFIG_REG.test(key)) {
+        key = key.replace(CONFIG_REG, '--')
+        arr = wk_args
+      } else if (VAR_REG.test(key)) {
+        key = key.replace(VAR_REG, '--')
+        arr = var_args
+      } else if (ENV_REG.test(key)) {
+        key = key.replace(ENV_REG, '--')
+        arr = env_args
+      }
+
+      if (!value) { arr.push(key) }
+      else { arr.push(key, value) }
+
       continue
     }
 
-    if (!WK_REG.test(key)) {
-      last_index = i
-      break
-    }
-
-    key = key.replace(WK_REG, '--')
-
-    if (!value && parameters[i+1] && !WK_REG.test(parameters[i+1])) {
-      value = parameters[i+1] as string
-      i++
-    }
-
-    if (!value) { args.push(key) }
-    else { args.push(key, value) }
+    last_index = i
+    break
   }
 
-  const o = Parser.parse(args)
-  o['wk::argv'] = parameters.slice(last_index).join(' ').trim()
-
-  const reg = /^wk::/
-  for (let key in o) {
-    const value = o[key]
-
-    if (reg.test(key)) {
-      key = key.replace(reg, '')
-      // @ts-ignore
-      options[key] = value
-      continue
-    }
-
-    if (value === "true") {
-      variables[key] = true
-    } else if (value === "false") {
-      variables[key] = false
-    } else {
-      variables[key] = o[key]
-    }
-  }
+  const o = Parser.parse(wk_args) as unknown as WKOptions
+  const args = parameters.slice(last_index)
+  o['command'] = args[0]
+  o['argv'] = args
 
   return {
-    wk: options,
-    variables,
+    wk: Object.assign(options, o),
+    variables: convert(Parser.parse(var_args)) as DStringBool,
+    env: convert(Parser.parse(env_args)) as DStringBool,
   }
-}
-
-export function render(cmd: string): Command {
-  const { wk, variables } = parse(cmd)
-
-  let command = [`wk`]
-  if (wk.command) command.push(wk.command)
-  if (wk.argv) command.push(wk.argv)
-
-  return [
-    command.join(' '),
-    {
-      variables
-    }
-  ]
 }

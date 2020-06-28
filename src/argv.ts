@@ -1,12 +1,12 @@
-import { WKOptions } from "./types"
+import { WKConfig } from "./types"
 
 const WK_REG = /^--wk\./
 const PARAM_REG = /^-{1,2}/
 const EQUAL_REG = /=/
 
-export function parse(argv: string[]): [WKOptions, string[]] {
+export function parse(argv: string[]): [WKConfig, string[]] {
   const _argv: string[] = []
-  const _wk: WKOptions = {
+  const _wk: WKConfig = {
     commands: 'Commands.yml',
     verbose: false,
     debug: false,
@@ -20,7 +20,7 @@ export function parse(argv: string[]): [WKOptions, string[]] {
       const parameter = a.replace(WK_REG, '')
       let [key, value] = parameter.split(EQUAL_REG)
 
-      switch (key as keyof WKOptions) {
+      switch (key as keyof WKConfig) {
         case "debug":
           {
             _wk.debug = true

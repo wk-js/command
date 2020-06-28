@@ -72,12 +72,16 @@ export declare type TaskParallel = {
     Parallel: Task[];
     Options: CommandOptions;
 };
-export declare type WKOptions = {
+export declare type WKConfig = {
     commands: string;
     verbose: boolean;
     debug: boolean;
     nocolor: boolean;
-    command?: string;
-    argv?: string;
 };
+export declare type WKOptions = WKConfig & {
+    command: string;
+    argv: string[];
+};
+export declare type DStringBool = Record<string, string | boolean>;
+export declare type DScalar = Record<string, string | boolean | number>;
 export declare type Scalar = string | boolean;

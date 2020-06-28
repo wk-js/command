@@ -1,22 +1,24 @@
 import { merge, deep_clone } from "lol/js/object"
-import { TagValue, WKOptions } from "./types"
+import { TagValue, WKConfig, WKOptions, DScalar, DStringBool } from "./types"
 import { Any } from "./tags"
 
 export class Context {
 
-  static _env: Record<string, string> = {}
-  static _variables: Record<string, string|boolean> = {}
+  static _env: DStringBool = {}
+  static _variables: DStringBool = {}
   static _config: WKOptions = {
     commands: 'Commands.yml',
     debug: false,
     nocolor: false,
     verbose: false,
+    command: '',
+    argv: [],
   }
 
   static export() {
     return deep_clone<{
       variables: Record<string, string|boolean>,
-      config: WKOptions
+      config: WKConfig
     }>({
       variables: this._variables,
       config: this._config,
@@ -31,7 +33,7 @@ export class Context {
     return this._env[key]
   }
 
-  static envs(v?: Record<string, string|undefined>) {
+  static envs(v?: DScalar) {
     if (v) {
       merge(this._env, v)
     }

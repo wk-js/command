@@ -44,13 +44,19 @@ export type TaskExec = { Exec: Task | string, Options: CommandOptions }
 export type TaskSerie = { Serie: Task[], Options: CommandOptions }
 export type TaskParallel = { Parallel: Task[], Options: CommandOptions }
 
-export type WKOptions = {
+export type WKConfig = {
   commands: string
   verbose: boolean
   debug: boolean
   nocolor: boolean
-  command?: string
-  argv?: string
 }
+
+export type WKOptions = WKConfig & {
+  command: string
+  argv: string[]
+}
+
+export type DStringBool = Record<string, string|boolean>
+export type DScalar = Record<string, string|boolean|number>
 
 export type Scalar = string | boolean

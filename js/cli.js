@@ -27,26 +27,22 @@ const object_1 = require("lol/js/object");
 const child_process_1 = require("child_process");
 let VERBOSE = false;
 async function main() {
-    var _a;
     // Parse ARGV
     const { wk, variables } = WK.parse('wk ' + process.argv.slice(2).join(' '));
-    Object.assign(context_1.Context.configs, wk);
-    // Resolve
-    const argv = (_a = wk.argv) === null || _a === void 0 ? void 0 : _a.split(' ');
-    const command = argv === null || argv === void 0 ? void 0 : argv.shift();
-    context_1.Context.var("command", command);
+    context_1.Context.configs(wk);
     // Parse file
     context_1.Context.envs(process.env);
     const [vars, commands, config, env] = yaml_1.parse_file(wk.commands);
     context_1.Context.vars(vars);
+    context_1.Context.vars(variables);
     context_1.Context.envs(env);
     context_1.Context.configs(config);
     const cmds = task_1.format_commands(object_1.flat(commands));
-    if (!task_1.exists(command, cmds)) {
+    if (!task_1.exists(wk.command, cmds)) {
         task_1.help2(cmds);
     }
     else {
-        const task = task_1.create_task2(command, cmds);
+        const task = task_1.create_task2(wk.command, cmds);
         if (!context_1.Context.config("debug")) {
             console.log(`\n> ${task}\n`);
             child_process_1.spawnSync(task, { shell: true, stdio: 'inherit', env: context_1.Context.envs() });

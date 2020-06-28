@@ -64,4 +64,6 @@ Context._config = {
     debug: false,
     nocolor: false,
     verbose: false,
+    command: '',
+    argv: [],
 };

@@ -1,2 +1,2 @@
-import { WKOptions } from "./types";
-export declare function parse(argv: string[]): [WKOptions, string[]];
+import { WKConfig } from "./types";
+export declare function parse(argv: string[]): [WKConfig, string[]];
