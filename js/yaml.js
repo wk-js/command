@@ -105,6 +105,6 @@ function parse_file(path) {
         const p0 = parse(config_block.join('\n'));
         config = Object.assign(config, object_1.omit(p0.config, 'commands'));
     }
-    return [variables, commands, config, env];
+    return { variables, commands, config, env };
 }
 exports.parse_file = parse_file;

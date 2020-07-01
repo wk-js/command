@@ -1,6 +1,6 @@
 import * as YAML from 'js-yaml';
 import { readFileSync } from 'fs';
-import { TagValue, Commands, WKConfig } from './types';
+import { TagValue, FileCommands, WKConfig } from './types';
 import * as Tags from './tags'
 import { omit } from 'lol/js/object'
 
@@ -44,7 +44,7 @@ export function parse(content: string, json = false) {
   return YAML.safeLoad(content, { schema })
 }
 
-export function parse_file(path: string): [Record<string, string>, Commands, Partial<WKConfig>, Record<string, string>] {
+export function parse_file(path: string) {
   const content = readFileSync(path, { encoding: 'utf-8' })
 
   const lines = content.split(LINEBREAK_REG)
@@ -70,7 +70,7 @@ export function parse_file(path: string): [Record<string, string>, Commands, Par
   })
 
   let variables: Record<string, string> = {}
-  let commands: Commands = {}
+  let commands: FileCommands = {}
   let config: Partial<WKConfig> = {}
   let env: Record<string, string> = {}
 
@@ -94,5 +94,5 @@ export function parse_file(path: string): [Record<string, string>, Commands, Par
     config = Object.assign(config, omit(p0.config, 'commands'))
   }
 
-  return [variables, commands, config, env]
+  return { variables, commands, config, env }
 }

@@ -1,0 +1,55 @@
+config:
+  debug: true
+
+env:
+  DEBUG: !Equals [ !Ref WK::Command, convert.test ]
+
+commands:
+  config: npx ttsc -p tsconfig.json
+  update:
+    table: >-
+      npx ttsc -p tsconfig.table.json
+      && node js/table.js
+  convert:
+    _convert: node js/lib/convert.js
+    default: >-
+      ${commands.config}
+      && ${commands.convert._convert}
+    copy: >-
+      ${commands.config}
+      && ${commands.convert._convert}
+      && ${commands.copy._copy}
+    test: ${commands.convert._convert}
+  copy:
+    _copy: node js/lib/copy.js
+    default: >-
+      ${commands.config}
+      && ${commands.copy._copy}
+  download:
+    default: ${commands.download.json.all}
+    csv|raw|json:
+      primary|secondary: >-
+        node js/lib/download.js
+        --export ${tree.1}
+        --type ${tree.2}
+        --output ../profiles
+      theme: >-
+        node js/lib/download.js
+        --export ${tree.1}
+        --type ${tree.2}
+        --output ../themes
+      all: >-
+        ${commands.download.*.primary}
+        && ${commands.download.*.secondary}
+        && ${commands.download.*.theme}
+  deploy:
+    staging: >-
+      git checkout staging
+      && git merge master
+      && git push origin staging
+      && git checkout master
+    production: >-
+      git checkout production
+      && git merge staging
+      && git push origin production
+      && git checkout master

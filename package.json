@@ -9,11 +9,11 @@
   "author": "Christophe MASSOLIN",
   "license": "ISC",
   "dependencies": {
-    "@types/js-yaml": "^3.12.2",
     "js-yaml": "3.13.1",
     "lol": "github:wk-js/lol.js#0.0.16"
   },
   "devDependencies": {
+    "@types/js-yaml": "^3.12.2",
     "@types/node": "13.9.2",
     "typescript": "3.9.5"
   }

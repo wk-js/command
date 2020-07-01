@@ -6,7 +6,7 @@ const tags_1 = require("./tags");
 class Context {
     static export() {
         return object_1.deep_clone({
-            variables: this._variables,
+            variables: Object.assign({ "WK::Command": this._config.command }, this._variables),
             config: this._config,
             env: this._env,
         });

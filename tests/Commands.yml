@@ -16,13 +16,11 @@ variables:
     - !Empty [ !Ref NODE_ENV ]
     - development
     - release
+  test: !Ref command
 
 # List of commands
 commands:
-  start:
-    default: ${commands.xt.run.chrome}
-    firefox: ${commands.xt.run.firefox}
-  tool:
+  "{tool,start}":
     default: ${commands.xt.run.chrome}
     firefox: ${commands.xt.run.firefox}
   packer: cd tools/packer && npm start

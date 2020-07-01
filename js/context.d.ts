@@ -1,11 +1,11 @@
-import { TagValue, WKConfig, WKOptions, DScalar, DStringBool } from "./types";
+import { TagValue, WKOptions, DScalar, DStringBool } from "./types";
 export declare class Context {
     static _env: DStringBool;
     static _variables: DStringBool;
     static _config: WKOptions;
     static export(): {
         variables: Record<string, string | boolean>;
-        config: WKConfig;
+        config: WKOptions;
     };
     static env(key: string, value?: string): string | boolean;
     static envs(v?: DScalar): Record<string, string | boolean>;

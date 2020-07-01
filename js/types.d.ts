@@ -50,11 +50,11 @@ export interface CommandOptions {
     env?: Record<string, TagValue>;
     variables?: Record<string, TagValue>;
 }
-export declare type Command = string | [string, CommandOptions];
+export declare type FileCommand = string | FileCommands;
 export interface Command2 extends Record<string, Commands2> {
 }
-export declare type Commands = {
-    [key: string]: Command;
+export declare type FileCommands = {
+    [key: string]: FileCommand;
 };
 export declare type Commands2 = {
     [key: string]: string;

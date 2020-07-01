@@ -1,6 +1,5 @@
 import { parse_file } from "./yaml"
-import { create_task2, exists, format_commands, help2 } from "./task"
-import { run } from "./exec"
+import * as Task from "./task"
 import { Context } from "./context"
 import * as WK from './wk'
 import { flat } from "lol/js/object"
@@ -11,27 +10,42 @@ let VERBOSE = false
 
 async function main() {
   // Parse ARGV
-  const { wk, variables } = WK.parse('wk ' + process.argv.slice(2).join(' '))
-  Context.configs(wk)
+  const argv = WK.parse(process.argv.slice(2))
+
+  // Apply configuration
+  Context.configs(argv.wk)
+
+  // Merge environment variables
+  Context.envs({
+    ...process.env as DScalar,
+    ...argv.env,
+  })
 
   // Parse file
-  Context.envs(process.env as DScalar)
+  const file = parse_file(argv.wk.commands)
 
-  const [vars, commands, config, env] = parse_file(wk.commands)
-  Context.vars(vars)
-  Context.vars(variables)
-  Context.envs(env)
-  Context.configs(config)
+  // Apply file variables, environment and config
+  Context.vars(file.variables)
+  Context.envs(file.env)
+  Context.configs(file.config)
 
-  const cmds = format_commands(flat(commands))
+  // Merge variables from argv
+  Context.vars(argv.variables)
 
-  if (!exists(wk.command, cmds)) {
-    help2(cmds)
+  // Format commands
+  const commands = Task.format_commands(file.commands)
+
+  if (!Task.exists(argv.wk.command, commands)) {
+    Task.help(commands)
   } else {
-    const task = create_task2(wk.command, cmds)
+    const task = Task.parse(argv.wk.command, commands)
+    console.log(`\n> ${task}\n`)
     if (!Context.config("debug")) {
-      console.log(`\n> ${task}\n`)
-      spawnSync(task, { shell: true, stdio: 'inherit', env: Context.envs() as Record<string, string | undefined> })
+      spawnSync(task, {
+        shell: true,
+        stdio: 'inherit',
+        env: Context.envs() as Record<string, string | undefined>
+      })
     }
   }
 }

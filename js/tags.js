@@ -167,8 +167,8 @@ function If({ If: [condition, v0, v1] }) {
 exports.If = If;
 function Ref({ Ref }) {
     validate(Ref, '[!Ref] Invalid reference key', 'string');
-    const { variables: references } = context_1.Context.export();
-    const value = references[Ref];
+    const { variables } = context_1.Context.export();
+    const value = variables[Ref];
     // validate(value, `[!Ref] Reference ${Ref} does not exist`)
     return value || '';
 }

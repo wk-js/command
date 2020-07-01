@@ -185,8 +185,8 @@ export function If({ If: [condition, v0, v1] }: Types.Tags['If']): Types.Scalar 
 export function Ref({ Ref }: Types.Tags['Ref']): Types.Scalar {
   validate(Ref, '[!Ref] Invalid reference key', 'string')
 
-  const { variables: references } = Context.export()
-  const value = references[Ref]
+  const { variables } = Context.export()
+  const value = variables[Ref]
   // validate(value, `[!Ref] Reference ${Ref} does not exist`)
 
   return value || ''

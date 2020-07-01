@@ -20,32 +20,40 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const yaml_1 = require("./yaml");
-const task_1 = require("./task");
+const Task = __importStar(require("./task"));
 const context_1 = require("./context");
 const WK = __importStar(require("./wk"));
-const object_1 = require("lol/js/object");
 const child_process_1 = require("child_process");
 let VERBOSE = false;
 async function main() {
     // Parse ARGV
-    const { wk, variables } = WK.parse('wk ' + process.argv.slice(2).join(' '));
-    context_1.Context.configs(wk);
+    const argv = WK.parse(process.argv.slice(2));
+    // Apply configuration
+    context_1.Context.configs(argv.wk);
+    // Merge environment variables
+    context_1.Context.envs(Object.assign(Object.assign({}, process.env), argv.env));
     // Parse file
-    context_1.Context.envs(process.env);
-    const [vars, commands, config, env] = yaml_1.parse_file(wk.commands);
-    context_1.Context.vars(vars);
-    context_1.Context.vars(variables);
-    context_1.Context.envs(env);
-    context_1.Context.configs(config);
-    const cmds = task_1.format_commands(object_1.flat(commands));
-    if (!task_1.exists(wk.command, cmds)) {
-        task_1.help2(cmds);
+    const file = yaml_1.parse_file(argv.wk.commands);
+    // Apply file variables, environment and config
+    context_1.Context.vars(file.variables);
+    context_1.Context.envs(file.env);
+    context_1.Context.configs(file.config);
+    // Merge variables from argv
+    context_1.Context.vars(argv.variables);
+    // Format commands
+    const commands = Task.format_commands(file.commands);
+    if (!Task.exists(argv.wk.command, commands)) {
+        Task.help(commands);
     }
     else {
-        const task = task_1.create_task2(wk.command, cmds);
+        const task = Task.parse(argv.wk.command, commands);
+        console.log(`\n> ${task}\n`);
         if (!context_1.Context.config("debug")) {
-            console.log(`\n> ${task}\n`);
-            child_process_1.spawnSync(task, { shell: true, stdio: 'inherit', env: context_1.Context.envs() });
+            child_process_1.spawnSync(task, {
+                shell: true,
+                stdio: 'inherit',
+                env: context_1.Context.envs()
+            });
         }
     }
 }

@@ -22,35 +22,19 @@ export function convert(o: Record<string, string|boolean|number>) {
   return o
 }
 
-export function parse(cmd: string): { wk: WKOptions, variables: DStringBool, env: DStringBool } {
-  const options: WKOptions = {
-    commands: 'Commands.yml',
-    verbose: false,
-    debug: false,
-    nocolor: false,
-    command: '',
-    argv: []
-  }
-  const variables: Record<string, string|boolean> = {}
-  const env: Record<string, string|boolean> = {}
-
-  const argv = cmd.trim().split(' ')
-  options.argv = argv.slice(1)
-  if (argv[0] !== 'wk') return { wk: options, variables, env }
-
+export function parse(argv: string[]): { wk: WKOptions, variables: DStringBool, env: DStringBool } {
   const wk_args: string[] = []
   const var_args: string[] = []
   const env_args: string[] = []
-  const parameters = argv.slice(1)
   let last_index = 0
 
-  for (let i = 0; i < parameters.length; i++) {
-    const arg = parameters[i];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
     let [key, value] = arg.split(EQUAL_REG)
 
     if (ALL_REG.test(key)) {
-      if (!value && parameters[i+1] && !PARAM_REG.test(parameters[i+1])) {
-        value = parameters[i+1] as string
+      if (!value && argv[i+1] && !PARAM_REG.test(argv[i+1])) {
+        value = argv[i+1] as string
         i++
       }
 
@@ -78,12 +62,19 @@ export function parse(cmd: string): { wk: WKOptions, variables: DStringBool, env
   }
 
   const o = Parser.parse(wk_args) as unknown as WKOptions
-  const args = parameters.slice(last_index)
+  const args = argv.slice(last_index)
   o['command'] = args[0]
   o['argv'] = args
 
   return {
-    wk: Object.assign(options, o),
+    wk: Object.assign({
+      commands: 'Commands.yml',
+      verbose: false,
+      debug: false,
+      nocolor: false,
+      command: '',
+      argv: []
+    }, o),
     variables: convert(Parser.parse(var_args)) as DStringBool,
     env: convert(Parser.parse(env_args)) as DStringBool,
   }

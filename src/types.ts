@@ -27,12 +27,12 @@ export interface CommandOptions {
   variables?: Record<string, TagValue>,
 }
 
-export type Command = string | [string, CommandOptions]
+export type FileCommand = string | FileCommands//[string, CommandOptions]
 
 export interface Command2 extends Record<string, Commands2> {}
 
-export type Commands = {
-  [key: string]: Command
+export type FileCommands = {
+  [key: string]: FileCommand
 }
 
 export type Commands2 = {

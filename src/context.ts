@@ -18,9 +18,12 @@ export class Context {
   static export() {
     return deep_clone<{
       variables: Record<string, string|boolean>,
-      config: WKConfig
+      config: WKOptions
     }>({
-      variables: this._variables,
+      variables: {
+        "WK::Command": this._config.command,
+        ...this._variables
+      },
       config: this._config,
       env: this._env,
     })

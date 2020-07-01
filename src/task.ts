@@ -1,23 +1,25 @@
-import { Commands, CommandOptions, Task, TaskExec, Commands2, Command2 } from "./types";
-import { pad } from "lol/js/string";
+import { Commands2, FileCommands } from "./types";
 import { Context } from "./context";
-import { Any, get_key, Scalar } from "./tags";
 import { template2 } from "lol/js/string/template";
-import { deflat, flat } from "lol/js/object";
-
-const ARG_REG = /^arg(\d+|s)$/
+import { flat } from "lol/js/object";
 
 function _TEMPLATE_ESCAPE_REGEX(str: string) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-const VAR_REG_OPTIONS = {
+const COMMAND_REG_OPTIONS = {
   open: '${commands.',
   body: '[a-z@$#-_?!]+',
   close: '}',
 }
+const TREE_REG_OPTIONS = {
+  open: '${tree.',
+  body: '[a-z@$#-_?!]+',
+  close: '}',
+}
 
-const VAR_REG = new RegExp(_TEMPLATE_ESCAPE_REGEX(VAR_REG_OPTIONS.open) + VAR_REG_OPTIONS.body +_TEMPLATE_ESCAPE_REGEX(VAR_REG_OPTIONS.close))
+const COMMAND_REG = new RegExp(_TEMPLATE_ESCAPE_REGEX(COMMAND_REG_OPTIONS.open) + COMMAND_REG_OPTIONS.body +_TEMPLATE_ESCAPE_REGEX(COMMAND_REG_OPTIONS.close))
+const TREE_REG = new RegExp(_TEMPLATE_ESCAPE_REGEX(TREE_REG_OPTIONS.open) + TREE_REG_OPTIONS.body +_TEMPLATE_ESCAPE_REGEX(TREE_REG_OPTIONS.close))
 
 export function find(name: string, commands: Commands2) {
   return commands[name] || commands[`${name}.default`] || commands[`${name}._default`]
@@ -27,40 +29,94 @@ export function exists(name: string, commands: Commands2) {
   return !!find(name, commands)
 }
 
-export function format_commands(commands: Commands2) {
+function replace_stars(command: string, tree: string[]) {
+  const reg = new RegExp(_TEMPLATE_ESCAPE_REGEX(COMMAND_REG_OPTIONS.open) + COMMAND_REG_OPTIONS.body +_TEMPLATE_ESCAPE_REGEX(COMMAND_REG_OPTIONS.close), 'g')
+
+  const matches = command.match(reg)
+  if (matches) {
+    for (let match of matches) {
+      const original = match
+      match = match.slice(COMMAND_REG_OPTIONS.open.length).slice(0, -COMMAND_REG_OPTIONS.close.length)
+      match = match.split('.').map((cmd, index) => {
+        if (cmd === "*" && tree[index]) {
+          return tree[index]
+        }
+        return cmd
+      }).join('.')
+      match = COMMAND_REG_OPTIONS.open + match + COMMAND_REG_OPTIONS.close
+      command = command.replace(new RegExp(_TEMPLATE_ESCAPE_REGEX(original), 'g'), match)
+    }
+  }
+
+  return command
+}
+
+export function split_commands(commands: FileCommands, tree: string[] = []) {
+  const c: FileCommands = {}
+
+  for (const [name, command] of Object.entries(commands)) {
+    for (const subname of name.split('|')) {
+      const key = subname
+      if (typeof command === "string") {
+        tree.push(key)
+        let cmd = replace_stars(command, tree)
+        cmd = visit(tree.join('.'), cmd, TREE_REG, TREE_REG_OPTIONS, flat(tree))
+        c[key] = cmd
+        tree.pop()
+      } else {
+        tree.push(key)
+        c[key] = split_commands(command, tree)
+        tree.pop()
+      }
+    }
+  }
+
+  return c
+}
+
+export function format_commands(commands: FileCommands) {
+  const c = flat(split_commands(commands))
+
   const default_reg = /._?default$/
   const cmds: Record<string, string> = {}
-  for (const key in commands) {
+  for (const key in c) {
     let k = key.replace(/\./g, '.')
-    cmds[k] = commands[key]
+    cmds[k] = c[key]
 
     if (default_reg.test(k)) {
       k = k.replace(default_reg, '')
-      cmds[k] = commands[key]
+      cmds[k] = c[key]
     }
   }
+
   return cmds
 }
 
-export function create_task2(name: string, commands: Commands2) {
-  let command = find(name, commands)
+function visit(name: string, command: string, regex: RegExp, options: typeof COMMAND_REG_OPTIONS, data: any) {
   const visited = new Set<string>()
 
   while (true) {
-    if (VAR_REG.test(command)) {
+    if (regex.test(command)) {
       if (visited.has(command)) throw `[wk] Task loop from "${name}"`
       visited.add(command)
-      command = template2(command, commands, VAR_REG_OPTIONS)
+      command = template2(command, data, options)
     } else { break }
   }
 
+  return command
+}
+
+export function parse(name: string, commands: Commands2) {
+  let command = find(name, commands)
+
+  command = visit(name, command, COMMAND_REG, COMMAND_REG_OPTIONS, commands)
   command = template2(command, flat(Context.export()))
   // command = `${command} ${args.join(' ')}`
 
   return command
 }
 
-export function help2(commands: Record<string, string>) {
+export function help(commands: Record<string, string>) {
   const ignored = new Set<string>()
   Object.keys(commands).forEach(key => {
     if (key.split('.').some(k => /^_/.test(k))) {

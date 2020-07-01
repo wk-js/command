@@ -43,32 +43,17 @@ function convert(o) {
     return o;
 }
 exports.convert = convert;
-function parse(cmd) {
-    const options = {
-        commands: 'Commands.yml',
-        verbose: false,
-        debug: false,
-        nocolor: false,
-        command: '',
-        argv: []
-    };
-    const variables = {};
-    const env = {};
-    const argv = cmd.trim().split(' ');
-    options.argv = argv.slice(1);
-    if (argv[0] !== 'wk')
-        return { wk: options, variables, env };
+function parse(argv) {
     const wk_args = [];
     const var_args = [];
     const env_args = [];
-    const parameters = argv.slice(1);
     let last_index = 0;
-    for (let i = 0; i < parameters.length; i++) {
-        const arg = parameters[i];
+    for (let i = 0; i < argv.length; i++) {
+        const arg = argv[i];
         let [key, value] = arg.split(EQUAL_REG);
         if (ALL_REG.test(key)) {
-            if (!value && parameters[i + 1] && !PARAM_REG.test(parameters[i + 1])) {
-                value = parameters[i + 1];
+            if (!value && argv[i + 1] && !PARAM_REG.test(argv[i + 1])) {
+                value = argv[i + 1];
                 i++;
             }
             let arr = wk_args;
@@ -96,11 +81,18 @@ function parse(cmd) {
         break;
     }
     const o = Parser.parse(wk_args);
-    const args = parameters.slice(last_index);
+    const args = argv.slice(last_index);
     o['command'] = args[0];
     o['argv'] = args;
     return {
-        wk: Object.assign(options, o),
+        wk: Object.assign({
+            commands: 'Commands.yml',
+            verbose: false,
+            debug: false,
+            nocolor: false,
+            command: '',
+            argv: []
+        }, o),
         variables: convert(Parser.parse(var_args)),
         env: convert(Parser.parse(env_args)),
     };
